@@ -1,0 +1,180 @@
+{
+  "conversation_list": [
+    {
+      "contactName": "Amit",
+      "lastMessage": "Last message",
+      "lastTime": "19:15",
+      "image": "avatar.jpg",
+      "messageHistory": [
+        {
+          "me": false,
+          "message": "How's everything going?"
+        },
+        {
+          "me": true,
+          "message": "Everything is going great, thanks for asking!"
+        }
+      ]
+    },
+    {
+      "contactName": "Priya",
+      "lastMessage": "Last message",
+      "lastTime": "05:43",
+      "image": "avatar2.jpg",
+      "messageHistory": [
+        {
+          "me": false,
+          "message": "Did you watch the movie on Amazon Prime?"
+        },
+        {
+          "me": true,
+          "message": "Yes, I watched it. It was really good!"
+        },
+        {
+          "me": false,
+          "message": "I'm glad you liked it. What did you think of the ending?"
+        }
+      ]
+    },
+    {
+      "contactName": "Rohit",
+      "lastMessage": "Last message",
+      "lastTime": "11:22",
+      "image": "avatar2.jpg",
+      "messageHistory": [
+        {
+          "me": true,
+          "message": "Hi, how are you doing?"
+        },
+        {
+          "me": false,
+          "message": "I'm doing well, thanks. How about you?"
+        },
+        {
+          "me": true,
+          "message": "I'm good, thanks. Do you have plans for the weekend?"
+        }
+      ]
+    },
+    {
+      "contactName": "Vikas",
+      "lastMessage": "Last message",
+      "lastTime": "14:08",
+      "image": "avatar.jpg",
+      "messageHistory": [
+        {
+          "me": false,
+          "message": "What's new with you?"
+        },
+        {
+          "me": true,
+          "message": "Nothing much, just been busy with work. What about you?"
+        },
+        {
+          "me": false,
+          "message": "Same here, just trying to stay on top of things at work."
+        }
+      ]
+    },
+    {
+      "contactName": "Anju",
+      "lastMessage": "Last message",
+      "lastTime": "21:00",
+      "image": "avatar2.jpg",
+      "messageHistory": [
+        {
+          "me": true,
+          "message": "Do you have any plans for the weekend?"
+        },
+        {
+          "me": false,
+          "message": "Not yet, any suggestions?"
+        },
+        {
+          "me": true,
+          "message": "How about we go for a hike in the hills?"
+        }
+      ]
+    },
+    {
+      "contactName": "Aakanksha",
+      "lastMessage": "Last message",
+      "lastTime": "21:00",
+      "image": "avatar2.jpg",
+      "messageHistory": [
+        {
+          "me": true,
+          "message": "Do you have any plans for the weekend?"
+        },
+        {
+          "me": false,
+          "message": "Not yet, any suggestions?"
+        },
+        {
+          "me": true,
+          "message": "How about we go for a hike in the hills?"
+        }
+      ]
+    },
+    {
+      "contactName": "Hreshi",
+      "lastMessage": "Last message",
+      "lastTime": "21:00",
+      "image": "avatar2.jpg",
+      "messageHistory": [
+        {
+          "me": true,
+          "message": "Do you have any plans for the weekend?"
+        },
+        {
+          "me": false,
+          "message": "Not yet, any suggestions?"
+        },
+        {
+          "me": true,
+          "message": "How about we go for a hike in the hills?"
+        }
+      ]
+    },
+    {
+      "contactName": "Mrunal",
+      "lastMessage": "Last message",
+      "lastTime": "21:00",
+      "image": "avatar2.jpg",
+      "messageHistory": [
+        {
+          "me": true,
+          "message": "Do you have any plans for the weekend?"
+        },
+        {
+          "me": false,
+          "message": "Not yet, any suggestions?"
+        },
+        {
+          "me": true,
+          "message": "How about we go for a hike in the hills?"
+        }
+      ]
+    },
+    {
+      "contactName": "Meera",
+      "lastMessage": "Last message",
+      "lastTime": "21:00",
+      "image": "avatar2.jpg",
+      "messageHistory": [
+        {
+          "me": true,
+          "message": "Do you have any plans for the weekend?"
+        },
+        {
+          "me": false,
+          "message": "Not yet, any suggestions?"
+        },
+        {
+          "me": true,
+          "message": "How about we go for a hike in the hills?"
+        }
+      ]
+    }
+  ]
+}
