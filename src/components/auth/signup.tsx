@@ -56,7 +56,7 @@ async function sendRegistrationRequest(data: {
       const token = await response.text();
 
       sessionStorage.setItem("userEmail", formData.get('email') as string);
-      sessionStorage.setItem("token", JSON.stringify(token));
+      sessionStorage.setItem("token", token as string);
       //const router = useRouter();
       //router.push('/home')
       
@@ -66,7 +66,7 @@ async function sendRegistrationRequest(data: {
   }
 }
 
-export default function SignUp({ isRegistered, setisRegistered }) {
+export default function SignUp({ isRegistered, setIsRegistered }) {
   const [avatarFile, setAvatarFile] = React.useState<File | null>(null); // add state to hold the chosen avatar file
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,7 +92,7 @@ export default function SignUp({ isRegistered, setisRegistered }) {
       });
 
       // do something with the token or redirect to another page
-      setisRegistered(true);
+      setIsRegistered(true);
     } catch (error) {
       console.error(error);
       // handle the error

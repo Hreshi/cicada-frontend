@@ -14,69 +14,69 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useEffect } from 'react';
-import { ToastContainer,toast } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 
 
 const theme = createTheme();
 
-export default function LoginScreen({isLoggedIn,setIsLoggedIn}) {
+export default function LoginScreen({ isLoggedIn, setIsLoggedIn }) {
 
 
 
 
-  
-  
-const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-
- 
-  
-  event.preventDefault();
-
-  
-  const data = new FormData(event.currentTarget);
-  console.log({
-    email: data.get('email'),
-    password: data.get('password'),
-  });
-
-  const formData = new FormData();
-
-  formData.append("email", data.get('email') as string);
-  formData.append("password", data.get('password') as string);
 
 
-  try {
-    const response = await fetch('http://localhost:8080/api/login', {
-      method: 'POST',
-      body: formData,
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+
+
+
+    event.preventDefault();
+
+
+    const data = new FormData(event.currentTarget);
+    console.log({
+      email: data.get('email'),
+      password: data.get('password'),
     });
 
-    if (!response.ok) {
-      toast.error("Failed to login");
-      console.error('Failed to login');
-      return;
+    const formData = new FormData();
+
+    formData.append("email", data.get('email') as string);
+    formData.append("password", data.get('password') as string);
+
+
+    try {
+      const response = await fetch('http://localhost:8080/api/login', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        toast.error("Failed to login");
+        console.error('Failed to login');
+        return;
+      }
+
+      console.log('Logged in successfully');
+      toast.success("Logged in successfully");
+      // const { token } = await response.json();
+      // const decodedToken = jwt.decode(token);
+      // console.log(decodedToken.sub);
+
+      const token = await response.text();
+
+      sessionStorage.setItem("userEmail", data.get('email') as string);
+      sessionStorage.setItem("token", token as string);
+
+      setIsLoggedIn(true);
+
+      //redirect to /home
+    } catch (error) {
+      console.error(error);
     }
-
-    console.log('Logged in successfully');
-    toast.success("Logged in successfully");
-    // const { token } = await response.json();
-    // const decodedToken = jwt.decode(token);
-    // console.log(decodedToken.sub);
-    
-    const token = await response.text();
-
-    sessionStorage.setItem("userEmail", data.get('email') as string);
-    sessionStorage.setItem("token", token);
-
-  setIsLoggedIn(true);
-   
-    //redirect to /home
-  } catch (error) {
-    console.error(error);
-  }
-};
+  };
 
 
   return (
@@ -132,7 +132,7 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
               Sign In
             </Button>
             <Grid container>
-              
+
               <Grid item>
                 <Link href="/register" variant="body2">
                   {"Don't have an account? Sign Up"}
@@ -141,7 +141,7 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
             </Grid>
           </Box>
         </Box>
-       
+
       </Container>
     </ThemeProvider>
   );

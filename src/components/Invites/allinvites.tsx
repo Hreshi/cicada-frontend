@@ -29,7 +29,7 @@ export default function InvitesPage() {
     // Search for username code here
   };
 
-  const userEmail = sessionStorage.getItem("email");
+  const userEmail = sessionStorage.getItem("userEmail");
   const token = sessionStorage.getItem("token");
 
   useEffect(() => {
@@ -37,23 +37,23 @@ export default function InvitesPage() {
       const sentInvitesResponse = await fetch(
         "http://localhost:8080/api/invite/sent",
         {
-          method:'get',
+          method: 'get',
           headers: {
-            'Authorization':'Bearer ' + sessionStorage.getItem('token')
+            'Authorization': 'Bearer ' + token
           }
         }
       );
       const sentInvitesData1 = await sentInvitesResponse.json();
       //const sentInvitesData = JSON.stringify(sentInvitesData1);
 
-    //  console.log("avi"+sentInvitesData1);
+      //  console.log("avi"+sentInvitesData1);
 
       const receivedInvitesResponse = await fetch(
         "http://localhost:8080/api/invite/received",
         {
-          method:'get',
+          method: 'get',
           headers: {
-            'Authorization':'Bearer ' + sessionStorage.getItem('token')
+            'Authorization': 'Bearer ' + token
           }
         }
       );
@@ -62,9 +62,9 @@ export default function InvitesPage() {
       //const receivedInvitesData =  JSON.stringify(receivedInvitesData1);
 
       // console.log(receivedInvitesData1);
-      const emailsRec= new Set();
+      const emailsRec = new Set();
 
-      for(const email of receivedInvitesData1){
+      for (const email of receivedInvitesData1) {
         emailsRec.add(email.email);
       }
 
@@ -73,9 +73,9 @@ export default function InvitesPage() {
           const userResponse = await fetch(
             `http://localhost:8080/api/user/info/${email}`,
             {
-              method:'get',
+              method: 'get',
               headers: {
-                'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                'Authorization': 'Bearer ' + token
               }
             }
           );
@@ -85,7 +85,7 @@ export default function InvitesPage() {
             name: receivedUserData.name,
             issent: 0,
             avatarUrl: receivedUserData.avatarUrl,
-            
+
           };
         })
       );
@@ -93,20 +93,20 @@ export default function InvitesPage() {
 
       const emails = new Set();
 
-      for(const email of sentInvitesData1){
+      for (const email of sentInvitesData1) {
         emails.add(email.email);
       }
-     
 
-      
+
+
       const usersData = await Promise.all(
         Array.from(emails).map(async (email) => {
           const userResponse = await fetch(
             `http://localhost:8080/api/user/info/${email}`,
             {
-              method:'get',
+              method: 'get',
               headers: {
-                'Authorization':'Bearer ' + sessionStorage.getItem('token') 
+                'Authorization': 'Bearer ' + token
               }
             }
           );
@@ -116,12 +116,12 @@ export default function InvitesPage() {
             name: userData.name,
             issent: 1,
             avatarUrl: userData.avatarUrl,
-            
+
           };
         })
       );
 
-      console.log("userData:"+usersData);
+      console.log("userData:" + usersData);
       setInvites(usersData);
 
       console.log(receivedUserData);
@@ -154,17 +154,15 @@ export default function InvitesPage() {
       <footer className="flex items-center bg-[#202c33] w-full h-16 py-3 text-[#8696a0]">
         <div className="ml-8">
           <button
-            className={`px-4 py-2 text-sm font-medium text-white rounded-lg mr-2 hover:bg-black ${
-              received ? "bg-green-500" : "bg-gray-700"
-            }`}
+            className={`px-4 py-2 text-sm font-medium text-white rounded-lg mr-2 hover:bg-black ${received ? "bg-green-500" : "bg-gray-700"
+              }`}
             onClick={() => HandleClickofheadrecieved()}
           >
             Sent Requests
           </button>
           <button
-            className={`px-4 py-2 text-sm font-medium text-white rounded-lg hover:bg-black ${
-              sent ? "bg-green-500" : "bg-gray-700"
-            }`}
+            className={`px-4 py-2 text-sm font-medium text-white rounded-lg hover:bg-black ${sent ? "bg-green-500" : "bg-gray-700"
+              }`}
             onClick={() => HandleClickofheadsent()}
           >
             Received Requests
@@ -179,7 +177,7 @@ export default function InvitesPage() {
         >
           {invites.map((invite, index) => {
             const { name, userEmail, avatarUrl, issent } = invite;
-            console.log("name: "+name+"email: "+userEmail+"avatarUrl: "+avatarUrl+"isSent: "+issent);
+            console.log("name: " + name + "email: " + userEmail + "avatarUrl: " + avatarUrl + "isSent: " + issent);
             if (issent) {
               return (
                 <InviteComp
@@ -202,16 +200,16 @@ export default function InvitesPage() {
           id="conversation"
         >
           {invitesReceived.map((invite, index) => {
-            const {name, userEmail, avatarUrl, issent } = invite;
+            const { name, userEmail, avatarUrl, issent } = invite;
             if (!issent) {
               return (
                 <InviteComp
-                key={index}
-                isFirstConversation={index == 0}
-                userName={name}
-                useremail={userEmail}
-                avatarUrl={avatarUrl}
-                isSent={issent}
+                  key={index}
+                  isFirstConversation={index == 0}
+                  userName={name}
+                  useremail={userEmail}
+                  avatarUrl={avatarUrl}
+                  isSent={issent}
                 />
               );
             }

@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 export default function SendInvitePage() {
   const [username, setUsername] = useState("");
   const { user } = useContext(ConversationContext);
+  const token = sessionStorage.getItem('token');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,7 +16,7 @@ export default function SendInvitePage() {
       const response = await fetch(`http://localhost:8080/api/invite/send/${username}`, {
         method: "POST",
         headers: {
-          'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+          'Authorization': 'Bearer ' + token
         },
       });
 
@@ -24,7 +25,7 @@ export default function SendInvitePage() {
         toast.error("Failed to send invite or invite already sent..");
         return;
       }
-      toast.success(`Sent invite to ${sessionStorage.getItem('userEmail')} successfully`);
+      toast.success(`Sent invite to ${username} successfully`);
       setUsername("");
     } catch (error) {
       console.error(error);

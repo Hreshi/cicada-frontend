@@ -14,7 +14,7 @@ export default function ConversationDetails({ showChat }) {
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [stompClient1, setStompClient1] = useState(null);
+  const [stompClient, setStompClient] = useState(null);
   const [subscription, setSubscription] = useState(null);
 
   const token = sessionStorage.getItem("token");
@@ -103,42 +103,41 @@ export default function ConversationDetails({ showChat }) {
 
   const [message, setMessage] = useState([]);
 
-  const jwtToken = token?.replace(/['"]+/g, "");
-
   useEffect(() => {
-    const sock = new SockJS("http://localhost:8080/api/ws?token=" + sessionStorage.getItem('token'));
-    const stompClient = Stomp.over(sock);
+    if(!stompClient) {
+      const sock = new SockJS("http://localhost:8080/api/ws?token=" + token);
+      const stomp = Stomp.over(sock);
 
-    stompClient.connect({}, () => {
-      console.log("Connected to WebSocket");
-      stompClient.subscribe(`/messages/${userEmail}`, (message) => {
-        console.log("Received message: " + message.body);
-        const parsedMessage = JSON.parse(message.body);
-        const parsedContent = JSON.parse(parsedMessage.content);
-        const author = parsedContent.content.author;
-        const messageText = parsedContent.content.message;
+      stomp.connect({}, () => {
+        console.log("Connected to WebSocket");
+        stomp.subscribe(`/messages/${userEmail}`, (message) => {
+          console.log("Received : " + message.body);
+          const messageBody = JSON.parse(message.body);
 
+          const messageText = messageBody.content;
+          const author = messageBody.author;
+          const messageDate = new Date(messageBody.date);
+          //const dt = new Date(parsedContent.content.date);
 
-        //const dt = new Date(parsedContent.content.date);
+          if (messageText != "") {
+            const teste = {
+              me: false,
+              author: author,
+              message: messageText,
+              date: messageDate,
+            };
 
-        if (messageText != "") {
-          const teste = {
-            me: false,
-            author: author,
-            message: messageText,
-            date: parsedContent.content.date,
-          };
-
-          console.log("teste: " + JSON.stringify(teste));
-          setConvos((convos) => convos.concat(teste));
-        }
+            console.log("teste: " + JSON.stringify(teste));
+            setConvos((convos) => convos.concat(teste));
+          }
+        });
       });
-    });
-    setStompClient1(stompClient);
+      setStompClient(stomp);
+    }
     return () => {
-      stompClient.disconnect();
+      // stomp.disconnect();
     };
-  }, [userEmail, jwtToken,stompClient, setStompClient]);
+  }, [userEmail, stompClient, setStompClient]);
 
   function changeHandler(evt: KeyboardEvent<HTMLInputElement>) {
     const { key } = evt;
@@ -153,7 +152,7 @@ export default function ConversationDetails({ showChat }) {
       };
       setConvos((convos) => convos.concat(teste));
       stompClient.send(
-        `http://localhost:8080/ms/send/${showChat}`,
+        `/ms/send/${showChat}`,
         {},
         messageSend
       );

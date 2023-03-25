@@ -10,42 +10,58 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    const userEmailFromStorage = sessionStorage.getItem("userEmail");
-
-    if (userEmailFromStorage ) {
-      setUserEmail(userEmailFromStorage);
-      setIsLoggedIn(true);
-      router.push("/home");
-    } else {
-      router.push("/login");
-    }
+    userAuthorized().then((auth) => {
+      if (auth) {
+        setIsLoggedIn(true)
+        router.push('/home')
+      } else {
+        router.push('/login');
+      }
+    })
   }, []);
 
   return (
     <>
-    <div
-     style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100vh', // Set the height of the container
-    }}
-    >
-    <Stack sx={{ color: 'grey.500' }} spacing={2} direction="row">
-      <CircularProgress color="secondary" />
-      <CircularProgress color="success" />
-      <CircularProgress color="inherit" />
-      <CircularProgress color="success" />
-      <CircularProgress color="secondary" />
-    </Stack>
-    </div>
-      
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh', // Set the height of the container
+        }}
+      >
+        <Stack sx={{ color: 'grey.500' }} spacing={2} direction="row">
+          <CircularProgress color="secondary" />
+          <CircularProgress color="success" />
+          <CircularProgress color="inherit" />
+          <CircularProgress color="success" />
+          <CircularProgress color="secondary" />
+        </Stack>
+      </div>
+
     </>
   );
 }
 
 
-
+async function userAuthorized() {
+  console.log("check")
+  const token = sessionStorage.getItem('token');
+  if (!token) return false;
+  const response = await fetch(
+    'http://localhost:8080/api/ping',
+    {
+      method: 'get',
+      headers: {
+        Authorization: 'Bearer ' + token,
+      }
+    }
+  );
+  if (response.ok) {
+    return true;
+  }
+  return false;
+}
 
 
 // import { useContext, useState, useEffect } from "react";

@@ -7,11 +7,11 @@ import SendInvitePage from "../Invites/sendinvite";
 interface ConversationListProps {
   isFirstConversation?: boolean;
   data: ConversationListData;
-  isSent:boolean;
+  isSent: boolean;
 }
 
 export default function inviteList(props: ConversationListProps) {
-  const { isFirstConversation, data ,isSent} = props;
+  const { isFirstConversation, data, isSent } = props;
   const { setConversation } = useContext(ConversationContext);
   const { contactName, lastMessage, lastTime, image } = data;
   const borderHeight = isFirstConversation ? "0px" : "1px";
@@ -66,9 +66,9 @@ export default function inviteList(props: ConversationListProps) {
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
               ></path>
             </svg>

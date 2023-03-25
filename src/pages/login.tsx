@@ -9,12 +9,15 @@ export default function Login() {
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     useEffect(()=> {
-        userAuthorized().then((auth) => {
-            if(auth) {
-                setIsLoggedIn(true)
-                router.push("/home");
-            }
-        })
+        if(isLoggedIn) {
+            router.push('/home');
+        } else {
+            userAuthorized().then((auth) => {
+                if(auth) {
+                    setIsLoggedIn(true)
+                }
+            });
+        }
     })
     return (
         <>
@@ -23,6 +26,7 @@ export default function Login() {
     );
 }
 async function userAuthorized() {
+    console.log("check")
     const token = sessionStorage.getItem('token');
     if (!token) return false;
     const response = await fetch(

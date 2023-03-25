@@ -5,50 +5,50 @@ import SendInvitePage from "../Invites/sendinvite";
 import Avatar from "@mui/material/Avatar";
 
 interface ConversationListProps {
-isFirstConversation: boolean;
-myName: string;
-partnerEmail: string;
-partnerName: string;
-partnerAvatar: string;
-lastMessage: string;
+  isFirstConversation: boolean;
+  myName: string;
+  partnerEmail: string;
+  partnerName: string;
+  partnerAvatar: string;
+  lastMessage: string;
 
-avatarUrl: string;
-me:boolean;
-setShowChat: (value: string) => void;
+  avatarUrl: string;
+  me: boolean;
+  setShowChat: (value: string) => void;
 
 }
 
 export default function AllConversations(props: ConversationListProps) {
-  const { isFirstConversation,myName,partnerEmail,partnerName,lastMessage,avatarUrl,me,setShowChat } = props;
+  const { isFirstConversation, myName, partnerEmail, partnerName, lastMessage, avatarUrl, me, setShowChat } = props;
 
   const borderHeight = isFirstConversation ? "0px" : "1px"
-  const [ isHover, seHover ] = useState(false);
+  const [isHover, seHover] = useState(false);
 
   const handleClickonConversation = () => {
-    console.log("click on conversation"+partnerEmail);
+    console.log("click on conversation" + partnerEmail);
     setShowChat(partnerEmail);
-    
+
     sessionStorage.setItem("currentChat", partnerEmail);
   };
 
   return (
-    <div 
+    <div
       className="flex items-center w-full h-[4.5rem] bg-[#111B21] pl-3 pr-4 hover:bg-[#2A3942] cursor-pointer"
-      onMouseMove={ () => seHover(true) }
-      onMouseLeave={ () => seHover(false) }
-      onClick={ () => handleClickonConversation() }
+      onMouseMove={() => seHover(true)}
+      onMouseLeave={() => seHover(false)}
+      onClick={() => handleClickonConversation()}
     >
       <div className="flex w-[4.8rem]">
-        <Avatar   src={avatarUrl} />
+        <Avatar src={avatarUrl} />
       </div>
       <div className="flex flex-col w-full">
-        <hr style={{borderTop: `${borderHeight} solid rgba(134,150,160,0.15)`}} />
+        <hr style={{ borderTop: `${borderHeight} solid rgba(134,150,160,0.15)` }} />
         <div className="flex py-2">
           <div className="flex flex-col w-full h-full ">
             <span className="overflow-y-hidden text-ellipsis text-white text-base">{partnerName}.{partnerEmail}</span>
             <span className="overflow-y-hidden text-ellipsis text-[#aebac1] text-sm">
-  {me ? `${myName} : ${lastMessage}` : `${partnerName} : ${lastMessage}`}
-</span>          </div>
+              {me ? `${myName} : ${lastMessage}` : `${partnerName} : ${lastMessage}`}
+            </span>          </div>
           <div className="flex flex-col w-auto text-[#aebac1]">
             <h1 className="text-xs"></h1>
             {
@@ -60,7 +60,7 @@ export default function AllConversations(props: ConversationListProps) {
                 </span>
               ) : null
             }
-            
+
           </div>
         </div>
       </div>
