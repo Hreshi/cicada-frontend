@@ -19,8 +19,8 @@ export default function ConversationDetails({ showChat }) {
 
   const token = sessionStorage.getItem("token");
   const userEmail = sessionStorage.getItem("userEmail");
-  const headers = {
 
+  const headers = {
     Authorization: `Bearer ${token}`,
     username: userEmail as string,
   };
@@ -47,10 +47,10 @@ export default function ConversationDetails({ showChat }) {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json();
+        const data = parseInt(await response.text());
 
         // Fetch messages in reverse order of blocks
-        console.log("does it come here3" + JSON.stringify(data));
+        console.log("Number of blocks : " + data);
 
         const messages = [];
         for (let i = 1; i <= data; i++) {
@@ -70,27 +70,28 @@ export default function ConversationDetails({ showChat }) {
             JSON.stringify(parsedMessage.messageList)
           );
 
-         // console.log("parsedmessage=" + JSON.stringify(blockData));
+          // console.log("parsedmessage=" + JSON.stringify(blockData));
           console.log("here it is");
           console.log(blockData);
           blockData.forEach((messageData) => {
-            const jsonObject = JSON.parse(messageData.content);
+            // const jsonObject = JSON.parse(messageData.content);
 
-            console.log("jsonObject=" + jsonObject.content.message);
-            if(jsonObject.content.message!=""){
-            messages.push({
-              me: messageData.author===userEmail?1:0,
-              author: jsonObject.content.author,
-              message: jsonObject.content.message,
-              date: new Date(jsonObject.content.date),
-            });
-          }
+            // console.log("jsonObject=" + jsonObject.content.message);
+
+            if (messageData.content != "") {
+              messages.push({
+                me: messageData.author === userEmail ? 1 : 0,
+                author: messageData.author,
+                message: messageData.content,
+                date: new Date(messageData.date),
+              });
+            }
           });
-        
+
         }
 
 
-        
+
         setConvos([...messages]);
       } catch (error) {
         console.error(error);
@@ -105,7 +106,6 @@ export default function ConversationDetails({ showChat }) {
   const jwtToken = token?.replace(/['"]+/g, "");
 
   useEffect(() => {
-    console.log("Making ws")
     const sock = new SockJS("http://localhost:8080/api/ws?token=" + sessionStorage.getItem('token'));
     const stompClient = Stomp.over(sock);
 
@@ -118,32 +118,32 @@ export default function ConversationDetails({ showChat }) {
         const author = parsedContent.content.author;
         const messageText = parsedContent.content.message;
 
-        
+
         //const dt = new Date(parsedContent.content.date);
 
-        if(messageText!=""){
-        const teste = {
-          me: false,
-          author: author,
-          message: messageText,
-          date: parsedContent.content.date,
-        };
-      
-        console.log("teste: " + JSON.stringify(teste));
-        setConvos((convos) => convos.concat(teste));
-      }
+        if (messageText != "") {
+          const teste = {
+            me: false,
+            author: author,
+            message: messageText,
+            date: parsedContent.content.date,
+          };
+
+          console.log("teste: " + JSON.stringify(teste));
+          setConvos((convos) => convos.concat(teste));
+        }
       });
     });
     setStompClient1(stompClient);
     return () => {
       stompClient.disconnect();
     };
-  }, [userEmail, jwtToken]);
+  }, [userEmail, jwtToken,stompClient, setStompClient]);
 
   function changeHandler(evt: KeyboardEvent<HTMLInputElement>) {
     const { key } = evt;
 
-    if (key === "Enter" && messageSend!="") {
+    if (key === "Enter" && messageSend != "") {
       console.log("entered message:" + messageSend);
       const teste = {
         me: true,
@@ -152,10 +152,10 @@ export default function ConversationDetails({ showChat }) {
         date: new Date(),
       };
       setConvos((convos) => convos.concat(teste));
-      stompClient1.send(
+      stompClient.send(
         `http://localhost:8080/ms/send/${showChat}`,
         {},
-        JSON.stringify({ content: teste })
+        messageSend
       );
 
       setMessageSend("");
@@ -164,10 +164,10 @@ export default function ConversationDetails({ showChat }) {
 
 
 
-  
+
   return (
     <>
-      
+
 
       <div className="flex flex-col w-full">
         <div className="flex justify-between w-full px-4">
@@ -177,7 +177,7 @@ export default function ConversationDetails({ showChat }) {
               <h1 className="text-white font-normal">{contactName}</h1>
               <h5>{contactEmail}</h5>
             </div>
-                  <button className={`px-4 py-2 text-sm font-medium text-white rounded-lg hover:bg-black 
+            <button className={`px-4 py-2 text-sm font-medium text-white rounded-lg hover:bg-black 
               `}>lock</button>
             <div className="flex items-center text-[#8696a0] gap-2">
               <svg
@@ -208,15 +208,15 @@ export default function ConversationDetails({ showChat }) {
 
         <div
           className="flex flex-col w-full h-full px-24 py-6 overflow-y-auto"
-         /* style={{ backgroundImage: "url('/assets/images/background.jpg')" }}*/
+        /* style={{ backgroundImage: "url('/assets/images/background.jpg')" }}*/
         >
           {convos.map((conv, index) => {
 
-            const { me, message,date } = conv;
+            const { me, message, date } = conv;
             console.log("date=" + date);
 
-            if(message!="")
-            return <MessageBalloon key={index} me={me} message={message} date={date} />;
+            if (message != "")
+              return <MessageBalloon key={index} me={me} message={message} date={date} />;
           })}
         </div>
 
