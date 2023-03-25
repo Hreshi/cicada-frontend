@@ -142,6 +142,7 @@ export default function SideBar({
             LastMessage: " ",
             lastMessageDate: new Date(),
             me: true,
+            avatarUrl:friend.avatarUrl,
           };
         }));
 
