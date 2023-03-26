@@ -19,12 +19,14 @@ interface ConversationListProps {
 }
 
 export default function AllConversations(props: ConversationListProps) {
-  const { isFirstConversation, myName, partnerEmail, partnerName, lastMessage, avatarUrl, me, setShowChat } = props;
+  const { isFirstConversation, myName, partnerEmail, partnerName, lastMessage, avatarUrl, me, setShowChat ,ongoingCall} = props;
 
   const borderHeight = isFirstConversation ? "0px" : "1px"
   const [isHover, seHover] = useState(false);
 
   const handleClickonConversation = () => {
+    // if a call is going on then block 
+    if(ongoingCall) return;
     console.log("click on conversation" + partnerEmail);
     setShowChat(partnerEmail);
 

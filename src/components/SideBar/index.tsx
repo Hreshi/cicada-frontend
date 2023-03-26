@@ -12,6 +12,7 @@ export default function SideBar({
   setsendinvite,
   setseeallinvites,
   setShowChat,
+  ongoingCall,
 }) {
   const [Name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -353,6 +354,7 @@ export default function SideBar({
               avatarUrl={conversation.avatarUrl}
               me={conversation.me}
               setShowChat={setShowChat}
+              ongoingCall={ongoingCall}
             />
           );
         })}

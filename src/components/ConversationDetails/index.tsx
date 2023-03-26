@@ -18,6 +18,8 @@ export default function ConversationDetails(
     setOutgoingCall,
     setOngoingCall,
     setIncomingCall,
+    setShowChat,
+    setCallFrom,
   }
 ) {
   const [messageSend, setMessageSend] = useState("");
@@ -37,7 +39,17 @@ export default function ConversationDetails(
 
   useEffect(() => {
     setConvos([]);
-
+    const fetchUserDetails = async () => {
+      console.log("does it come here");
+      const userData = await fetch(
+        `http://localhost:8080/api/user/info/${showChat}`,
+        { headers }
+      );
+      const partnerData = await userData.json();
+      setContactName(partnerData.name);
+      setAvatarUrl(partnerData.avatarUrl);
+      setContactEmail(partnerData.email);
+    }
     const fetchConversationDetails = async () => {
       const email = showChat;
 
@@ -107,8 +119,12 @@ export default function ConversationDetails(
       } catch (error) {
         console.error(error);
       }
-    };
-    fetchConversationDetails();
+    }
+    if(ongoingCall) {
+      fetchUserDetails();
+    } else {
+      fetchConversationDetails();
+    }
   }, [showChat]);
 
   const [message, setMessage] = useState([]);
@@ -117,12 +133,12 @@ export default function ConversationDetails(
   function handleMessage(frame) {
     const message = JSON.parse(frame.body as string)
     console.log("Received" + message)
-    console.log("type of message is"+message.messagetype)
+    console.log("type of message is" + message.messagetype)
     const mt = message.messagetype as string
-    if (mt == 'MESSAGE') {
+    if (mt == 'MESSAGE' || mt == 'SECRET') {
       const messageText = message.content;
       const author = message.author;
-      const messageDate = new Date(message.date);
+      const messageDate = new Date();
       //const dt = new Date(parsedContent.content.date);
 
       if (messageText != "") {
@@ -137,6 +153,7 @@ export default function ConversationDetails(
         setConvos((convos) => convos.concat(teste));
       }
     } else if (mt == 'CALL_REQUEST') {
+
       setIncomingCall(true);
 
     } else if (mt == 'CALL_REQUEST_ACCEPTED') {
@@ -144,12 +161,19 @@ export default function ConversationDetails(
       setOngoingCall(true);
       setIncomingCall(false);
       setOutgoingCall(false);
+      console.log(message.acceptedBy.email);
+      setShowChat(message.acceptedBy.email);
+      sessionStorage.setItem('currentChat', message.acceptedBy.email);
+
     } else if (mt == 'CALL_REQUEST_REJECTED') {
+
       setOutgoingCall(false);
+
     } else if (mt == 'END_OF_CALL') {
       setOutgoingCall(false);
       setIncomingCall(false);
       setOngoingCall(false);
+
     }
   }
   useEffect(() => {
@@ -180,11 +204,19 @@ export default function ConversationDetails(
         date: new Date(),
       };
       setConvos((convos) => convos.concat(teste));
-      stompClient.send(
-        `/ms/send/${showChat}`,
-        {},
-        messageSend
-      );
+      if(ongoingCall) {
+        stompClient.send(
+          `/ms/secure`,
+          {},
+          messageSend
+        );
+      } else {
+        stompClient.send(
+          `/ms/send/${showChat}`,
+          {},
+          messageSend
+        );
+      }
 
       setMessageSend("");
     }
@@ -205,8 +237,8 @@ export default function ConversationDetails(
       );
       if (response.ok) {
         toast.success(`calling ${contactName}`, {
-          autoClose:2000,
-          pauseOnHover:false,
+          autoClose: 2000,
+          pauseOnHover: false,
         });
         setOutgoingCall(true);
         console.log('success');
@@ -284,7 +316,7 @@ export default function ConversationDetails(
           {convos.map((conv, index) => {
 
             const { me, message, date } = conv;
-            console.log("date=" + date);
+            // console.log("date=" + date);
 
             if (message != "")
               return <MessageBalloon key={index} me={me} message={message} date={date} />;

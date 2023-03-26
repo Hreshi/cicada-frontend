@@ -52,12 +52,17 @@ function HomeContent() {
           setsendinvite={setsendinvite}
           setseeallinvites={setseeallinvites}
           setShowChat={setShowChat}
+          ongoingCall={ongoingCall}
         />
 
         <div className="flex w-[70%] bg-[#222E35]">
           {
             incomingCall &&
-            <IncomingCall setIncomingCall={setIncomingCall} setOngoingCall={setOngoingCall} />
+            <IncomingCall
+              setIncomingCall={setIncomingCall}
+              setOngoingCall={setOngoingCall}
+              setShowChat={setShowChat}
+            />
           }
           {
             outgoingCall && <OutgoingCall setOutgoingCall={setOutgoingCall} />
@@ -77,6 +82,7 @@ function HomeContent() {
               incomingCall={incomingCall}
               outgoingCall={outgoingCall}
               ongoingCall={ongoingCall}
+              setShowChat={setShowChat}
             />
           ) : (
             homechat && <IconHome />
