@@ -4,11 +4,22 @@ import Avatar from "@mui/material/Avatar";
 import MessageBalloon from "../MessageBalloon";
 import SendInvitePage from "../Invites/sendinvite";
 import Chat from "./Chat";
+import { ToastContainer, toast } from "react-toastify";
 
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
 
-export default function ConversationDetails({ showChat }) {
+export default function ConversationDetails(
+  {
+    showChat,
+    incomingCall,
+    outgoingCall,
+    ongoingCall,
+    setOutgoingCall,
+    setOngoingCall,
+    setIncomingCall,
+  }
+) {
   const [messageSend, setMessageSend] = useState("");
   const [convos, setConvos] = useState([]);
   const [contactName, setContactName] = useState("");
@@ -102,34 +113,53 @@ export default function ConversationDetails({ showChat }) {
 
   const [message, setMessage] = useState([]);
 
+
+  function handleMessage(frame) {
+    const message = JSON.parse(frame.body as string)
+    console.log("Received" + message)
+    console.log("type of message is"+message.messagetype)
+    const mt = message.messagetype as string
+    if (mt == 'MESSAGE') {
+      const messageText = message.content;
+      const author = message.author;
+      const messageDate = new Date(message.date);
+      //const dt = new Date(parsedContent.content.date);
+
+      if (messageText != "") {
+        const teste = {
+          me: false,
+          author: author,
+          message: messageText,
+          date: messageDate,
+        };
+
+        console.log("teste: " + JSON.stringify(teste));
+        setConvos((convos) => convos.concat(teste));
+      }
+    } else if (mt == 'CALL_REQUEST') {
+      setIncomingCall(true);
+
+    } else if (mt == 'CALL_REQUEST_ACCEPTED') {
+
+      setOngoingCall(true);
+      setIncomingCall(false);
+      setOutgoingCall(false);
+    } else if (mt == 'CALL_REQUEST_REJECTED') {
+      setOutgoingCall(false);
+    } else if (mt == 'END_OF_CALL') {
+      setOutgoingCall(false);
+      setIncomingCall(false);
+      setOngoingCall(false);
+    }
+  }
   useEffect(() => {
-    if(!stompClient) {
+    if (!stompClient) {
       const sock = new SockJS("http://localhost:8080/api/ws?token=" + token);
       const stomp = Stomp.over(sock);
 
       stomp.connect({}, () => {
         console.log("Connected to WebSocket");
-        stomp.subscribe(`/messages/${userEmail}`, (message) => {
-          console.log("Received : " + message.body);
-          const messageBody = JSON.parse(message.body);
-
-          const messageText = messageBody.content;
-          const author = messageBody.author;
-          const messageDate = new Date(messageBody.date);
-          //const dt = new Date(parsedContent.content.date);
-
-          if (messageText != "") {
-            const teste = {
-              me: false,
-              author: author,
-              message: messageText,
-              date: messageDate,
-            };
-
-            console.log("teste: " + JSON.stringify(teste));
-            setConvos((convos) => convos.concat(teste));
-          }
-        });
+        stomp.subscribe(`/messages/${userEmail}`, handleMessage);
       });
       setStompClient(stomp);
     }
@@ -161,11 +191,53 @@ export default function ConversationDetails({ showChat }) {
   }
 
 
-
+  function handleLockClick() {
+    console.log('Send call request to : ' + contactEmail);
+    const startCall = async () => {
+      const response = await fetch(
+        `http://localhost:8080/api/stego/request/call/${contactEmail}`,
+        {
+          method: 'get',
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        }
+      );
+      if (response.ok) {
+        toast.success(`calling ${contactName}`, {
+          autoClose:2000,
+          pauseOnHover:false,
+        });
+        setOutgoingCall(true);
+        console.log('success');
+      } else {
+        console.log('user offline');
+        toast.error(`${contactName} is not available`);
+      }
+    }
+    const endCall = async () => {
+      const response = await fetch(
+        `http://localhost:8080/api/stego/call/end`,
+        {
+          method: 'post',
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        }
+      );
+      setOngoingCall(false);
+      setOutgoingCall(false);
+    }
+    if (ongoingCall) {
+      endCall();
+    } else {
+      startCall();
+    }
+  }
 
   return (
     <>
-
+      <ToastContainer></ToastContainer>
 
       <div className="flex flex-col w-full">
         <div className="flex justify-between w-full px-4">
@@ -175,8 +247,9 @@ export default function ConversationDetails({ showChat }) {
               <h1 className="text-white font-normal">{contactName}</h1>
               <h5>{contactEmail}</h5>
             </div>
-            <button className={`px-4 py-2 text-sm font-medium text-white rounded-lg hover:bg-black 
-              `}>lock</button>
+            <button onClick={handleLockClick} className="px-4 py-2 text-sm font-medium text-white rounded-lg hover:bg-black ">
+              {ongoingCall ? "UNLOCK" : "LOCK"}
+            </button>
             <div className="flex items-center text-[#8696a0] gap-2">
               <svg
                 viewBox="0 0 24 24"

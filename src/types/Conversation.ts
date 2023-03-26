@@ -1,3 +1,9 @@
+interface User {
+  email: string;
+  name: string;
+  avatarUrl: string;
+}
+
 interface Message {
   me: boolean;
   message: string;
