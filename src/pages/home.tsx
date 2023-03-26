@@ -12,6 +12,12 @@ function HomeContent() {
   const [homechat, sethomechat] = useState(true);
   const [seeallinvites, setseeallinvites] = useState(false);
   const [showChat, setShowChat] = useState("");
+  const [incomingCall, setIncomingCall] = useState(false);
+  const [outgoingCall, setOutgoingCall] = useState(false);
+  const [ongoingCall, setOngoingCall] = useState(false);
+  const [callFrom, setCallFrom] = useState(null);
+  const [CallTo, setCallTo] = useState(null);
+  const [callWith, setCallWith] = useState(false);
 
   useEffect(() => {
     if (sendinvite) {
@@ -45,6 +51,12 @@ function HomeContent() {
           setShowChat={setShowChat}
         />
         <div className="flex w-[70%] bg-[#222E35]">
+          {/* for floating options, incoming call,  */}
+          <div className="flex justify-center items-center v-screen ">
+            <div className="bg-white p-8 rounded-lg shadow-lg float-right mx-auto">
+              <button>Hello</button>
+            </div>
+          </div>
           {homechat && showChat ? (
             <ConversationDetails
               showChat={showChat}
@@ -54,6 +66,8 @@ function HomeContent() {
           )}
           {sendinvite && <SendInvitePage />}
           {seeallinvites && <InvitesPage />}
+
+
         </div>
       </div>
     </div>
