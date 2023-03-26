@@ -1,4 +1,4 @@
-function IncomingCall({setIncomingCall, setOngoingCall,setShowChat}) {
+function IncomingCall({setIncomingCall, setOngoingCall,setShowChat, setNumberPrompt}) {
     const token = sessionStorage.getItem('token');
     function handleAcceptCall() {
         const accept = async () => {
@@ -15,6 +15,7 @@ function IncomingCall({setIncomingCall, setOngoingCall,setShowChat}) {
                 const user = JSON.parse(JSON.stringify(await friend.json()));
                 setOngoingCall(true);
                 setShowChat(user.email as string);
+                setNumberPrompt(true);
                 sessionStorage.setItem('currentChat', user.email);
             }
             setIncomingCall(false);

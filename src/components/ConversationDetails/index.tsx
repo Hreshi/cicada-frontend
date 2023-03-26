@@ -19,7 +19,11 @@ export default function ConversationDetails(
     setOngoingCall,
     setIncomingCall,
     setShowChat,
-    setCallFrom,
+    setNumberPrompt,
+    setStompClient,
+    stompClient,
+    secretNumber,
+    privateKey,
   }
 ) {
   const [messageSend, setMessageSend] = useState("");
@@ -27,8 +31,9 @@ export default function ConversationDetails(
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [stompClient, setStompClient] = useState(null);
   const [subscription, setSubscription] = useState(null);
+  const [friendKey, setFriendKey] = useState<CryptoKey | null>(null);
+  const [firstFrame, setFirstFrame] = useState(0);
 
   const token = sessionStorage.getItem("token");
   const userEmail = sessionStorage.getItem("userEmail");
@@ -120,7 +125,7 @@ export default function ConversationDetails(
         console.error(error);
       }
     }
-    if(ongoingCall) {
+    if (ongoingCall) {
       fetchUserDetails();
     } else {
       fetchConversationDetails();
@@ -131,50 +136,72 @@ export default function ConversationDetails(
 
 
   function handleMessage(frame) {
-    const message = JSON.parse(frame.body as string)
-    console.log("Received" + message)
-    console.log("type of message is" + message.messagetype)
-    const mt = message.messagetype as string
-    if (mt == 'MESSAGE' || mt == 'SECRET') {
-      const messageText = message.content;
-      const author = message.author;
-      const messageDate = new Date();
-      //const dt = new Date(parsedContent.content.date);
+    const process = async () => {
+      const message = JSON.parse(frame.body as string)
+      // console.log("Received" + message)
+      console.log("type of message is" + message.messagetype)
+      const mt = message.messagetype as string
+      if (mt == 'MESSAGE') {
+        const messageText = message.content;
+        const author = message.author;
+        const messageDate = new Date();
+        //const dt = new Date(parsedContent.content.date);
 
-      if (messageText != "") {
-        const teste = {
-          me: false,
-          author: author,
-          message: messageText,
-          date: messageDate,
-        };
+        if (messageText != "") {
+          const teste = {
+            me: false,
+            author: author,
+            message: messageText,
+            date: messageDate,
+          };
+          setConvos((convos) => convos.concat(teste));
+        }
+      } else if (mt == 'CALL_REQUEST') {
 
-        console.log("teste: " + JSON.stringify(teste));
-        setConvos((convos) => convos.concat(teste));
+        setIncomingCall(true);
+
+      } else if (mt == 'CALL_REQUEST_ACCEPTED') {
+
+        setOngoingCall(true);
+        setIncomingCall(false);
+        setOutgoingCall(false);
+        console.log(message.acceptedBy.email);
+        setShowChat(message.acceptedBy.email);
+        setNumberPrompt(true);
+        sessionStorage.setItem('currentChat', message.acceptedBy.email);
+        setFirstFrame(true);
+
+      } else if (mt == 'CALL_REQUEST_REJECTED') {
+
+        setOutgoingCall(false);
+
+      } else if (mt == 'END_OF_CALL') {
+        setOutgoingCall(false);
+        setIncomingCall(false);
+        setOngoingCall(false);
+        setFirstFrame(true);
+      } else if (mt == 'SECRET') {
+        const cnt = message.content as string;
+        if (cnt.length > 1000) {
+          console.log('host data');
+          setFriendKey(await decipherKey(cnt, 11111));
+        } else {
+          console.log('message:' + cnt);
+          const data = cnt;
+          const author = message.author;
+          const date = new Date;
+          const teste = {
+            me: false,
+            author: author,
+            message: data,
+            date: date,
+          };
+          setConvos((convos) => convos.concat(teste));
+        }
+        setFirstFrame(firstFrame + 1);
       }
-    } else if (mt == 'CALL_REQUEST') {
-
-      setIncomingCall(true);
-
-    } else if (mt == 'CALL_REQUEST_ACCEPTED') {
-
-      setOngoingCall(true);
-      setIncomingCall(false);
-      setOutgoingCall(false);
-      console.log(message.acceptedBy.email);
-      setShowChat(message.acceptedBy.email);
-      sessionStorage.setItem('currentChat', message.acceptedBy.email);
-
-    } else if (mt == 'CALL_REQUEST_REJECTED') {
-
-      setOutgoingCall(false);
-
-    } else if (mt == 'END_OF_CALL') {
-      setOutgoingCall(false);
-      setIncomingCall(false);
-      setOngoingCall(false);
-
     }
+    process();
   }
   useEffect(() => {
     if (!stompClient) {
@@ -204,19 +231,11 @@ export default function ConversationDetails(
         date: new Date(),
       };
       setConvos((convos) => convos.concat(teste));
-      if(ongoingCall) {
-        stompClient.send(
-          `/ms/secure`,
-          {},
-          messageSend
-        );
-      } else {
-        stompClient.send(
-          `/ms/send/${showChat}`,
-          {},
-          messageSend
-        );
-      }
+      stompClient.send(
+        `/ms/send/${showChat}`,
+        {},
+        messageSend
+      );
 
       setMessageSend("");
     }
@@ -257,6 +276,7 @@ export default function ConversationDetails(
           }
         }
       );
+      setFirstFrame(true);
       setOngoingCall(false);
       setOutgoingCall(false);
     }
@@ -375,4 +395,117 @@ export default function ConversationDetails(
       </div>
     </>
   );
+}
+
+
+async function decipherKey(hostData, secretNumber) {
+  const pem = formatAsPem(decipher(hostData, secretNumber));
+  console.log(pem);
+  const key = await importPublicKey(pem);
+  return key;
+}
+
+async function importPublicKey(pem) {
+  // fetch the part of the PEM string between header and footer
+  const pemHeader = "-----BEGIN PUBLIC KEY-----";
+  const pemFooter = "-----END PUBLIC KEY-----";
+  const pemContents = pem.substring(
+    pemHeader.length,
+    pem.length - pemFooter.length
+  );
+  // base64 decode the string to get the binary data
+  const binaryDerString = window.atob(pemContents);
+
+  console.log(binaryDerString);
+  // convert from a binary string to an ArrayBuffer
+  const binaryDer = str2ab(binaryDerString);
+
+  return await window.crypto.subtle.importKey(
+    "spki",
+    binaryDer,
+    {
+      name: "RSA-OAEP",
+      hash: "SHA-256",
+    },
+    true,
+    ["encrypt"]
+  );
+}
+
+async function decryptMessage(key, message) {
+  return await decryptData(key, message);
+}
+function ab2str(buf) {
+  return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+function str2ab(str) {
+  const buf = new ArrayBuffer(str.length);
+  const bufView = new Uint8Array(buf);
+  for (let i = 0, strLen = str.length; i < strLen; i++) {
+    bufView[i] = str.charCodeAt(i);
+  }
+  return buf;
+}
+// Decrypt cipher data into plaintext using private key
+async function decryptData(key: CryptoKey, cipherBase64: string) {
+  let binData = atob(cipherBase64);
+  let dataBuffer = str2ab(binData);
+
+  let decryptedDataBuffer = await window.crypto.subtle.decrypt(
+    {
+      name: "RSA-OAEP"
+    },
+    key,
+    dataBuffer
+  )
+  return ab2str(decryptedDataBuffer);
+}
+function decipher(host_data, secret) {
+  let current_number = operation(secret);
+  let len = "";
+  for (let i = 0; i < 4; i++) {
+    len += host_data.charAt(current_number);
+    current_number += operation(current_number);
+  }
+  let dataLength = parseInt(len);
+  let result = new Array()
+
+  for (let i = 0; i < dataLength; i++) {
+    result.push(host_data.charAt(current_number));
+    current_number += operation(current_number);
+  }
+  return result.join('');
+}
+
+function operation(num) {
+  num += (num && ((num << 1) || num));
+  num %= 17;
+  num++;
+  return num;
+}
+function formatAsPem(str) {
+  var finalString = '-----BEGIN PUBLIC KEY-----\n';
+
+  while (str.length > 0) {
+    finalString += str.substring(0, 64) + '\n';
+    str = str.substring(64);
+  }
+
+  finalString = finalString + "-----END PUBLIC KEY-----";
+  const keyPem = finalString;
+  return finalString;
+}
+
+
+// Encrypt text using public key object
+async function encryptData(key, data64) {
+  let dataArrayBuffer = str2ab(data64)
+  let encryptedDataBuffer = await window.crypto.subtle.encrypt(
+    {
+      name: "RSA-OAEP"
+    },
+    key,
+    dataArrayBuffer
+  );
+  return btoa(ab2str(encryptedDataBuffer))
 }

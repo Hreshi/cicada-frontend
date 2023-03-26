@@ -7,6 +7,7 @@ import SendInvitePage from "../components/Invites/sendinvite";
 import SideBar from "../components/SideBar";
 import IncomingCall from "../components/Call/incomingCall";
 import OutgoingCall from "../components/Call/outgoingCall";
+import NumberPrompt from "../components/Call/numberPrompt";
 
 function HomeContent() {
   const { conversation } = useContext(ConversationContext);
@@ -17,9 +18,10 @@ function HomeContent() {
   const [incomingCall, setIncomingCall] = useState(false);
   const [outgoingCall, setOutgoingCall] = useState(false);
   const [ongoingCall, setOngoingCall] = useState(false);
-  const [callFrom, setCallFrom] = useState(null);
-  const [CallTo, setCallTo] = useState(null);
-  const [callWith, setCallWith] = useState(null);
+  const [numberPrompt, setNumberPrompt] = useState(false);
+  const [privateKey, setPrivateKey] = useState<CryptoKey | null>(null);
+  const [stompClient, setStompClient] = useState(null);
+  const [secretNumber, setSecretNumber] = useState(4);
 
   useEffect(() => {
     if (sendinvite) {
@@ -62,10 +64,19 @@ function HomeContent() {
               setIncomingCall={setIncomingCall}
               setOngoingCall={setOngoingCall}
               setShowChat={setShowChat}
+              setNumberPrompt={setNumberPrompt}
             />
           }
           {
             outgoingCall && <OutgoingCall setOutgoingCall={setOutgoingCall} />
+          }
+          {
+            numberPrompt && <NumberPrompt
+              setNumberPrompt={setNumberPrompt}
+              setPrivateKey={setPrivateKey}
+              stompClient={stompClient}
+              setSecretNumber={setSecretNumber}
+            />
           }
           {/* for floating options, incoming call,  */}
           {/* <div className="flex justify-center items-center v-screen ">
@@ -83,6 +94,11 @@ function HomeContent() {
               outgoingCall={outgoingCall}
               ongoingCall={ongoingCall}
               setShowChat={setShowChat}
+              setNumberPrompt={setNumberPrompt}
+              stompClient={stompClient}
+              setStompClient={setStompClient}
+              secretNumber={secretNumber}
+              privateKey={privateKey}
             />
           ) : (
             homechat && <IconHome />
