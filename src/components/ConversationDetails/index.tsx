@@ -22,11 +22,11 @@ export default function ConversationDetails({ showChat }) {
 
   const headers = {
     Authorization: `Bearer ${token}`,
-    username: userEmail as string,
   };
 
   useEffect(() => {
     setConvos([]);
+
     const fetchConversationDetails = async () => {
       const email = showChat;
 
@@ -97,7 +97,6 @@ export default function ConversationDetails({ showChat }) {
         console.error(error);
       }
     };
-
     fetchConversationDetails();
   }, [showChat]);
 

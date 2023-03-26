@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Avatar from "@mui/material/Avatar";
 
-const ProfilePage = ({ name, email, avatarImage }) => {
+const ProfilePage = ({ name, email, avatarUrl }) => {
   const [notifications, setNotifications] = useState([
     { id: 1, text: "Send Invite", read: false },
     { id: 2, text: "See All Invites", read: true },
@@ -25,7 +25,7 @@ const ProfilePage = ({ name, email, avatarImage }) => {
       <div className="absolute right-0 z-10 w-56 bg-black rounded-md shadow-lg">
         <div className="py-1">
           <div className="flex items-center">
-            <Avatar src={avatarImage} />
+            <Avatar src={avatarUrl} />
             <div className="ml-4 text-lg font-medium text-white">{name}</div>
           </div>
           <div className="flex items-center mt-2 text-sm font-medium text-gray-400">
