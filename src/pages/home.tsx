@@ -19,9 +19,7 @@ function HomeContent() {
   const [outgoingCall, setOutgoingCall] = useState(false);
   const [ongoingCall, setOngoingCall] = useState(false);
   const [numberPrompt, setNumberPrompt] = useState(false);
-  const [privateKey, setPrivateKey] = useState<CryptoKey | null>(null);
   const [stompClient, setStompClient] = useState(null);
-  const [secretNumber, setSecretNumber] = useState(4);
 
   useEffect(() => {
     if (sendinvite) {
@@ -73,9 +71,7 @@ function HomeContent() {
           {
             numberPrompt && <NumberPrompt
               setNumberPrompt={setNumberPrompt}
-              setPrivateKey={setPrivateKey}
               stompClient={stompClient}
-              setSecretNumber={setSecretNumber}
             />
           }
           {/* for floating options, incoming call,  */}
@@ -97,8 +93,6 @@ function HomeContent() {
               setNumberPrompt={setNumberPrompt}
               stompClient={stompClient}
               setStompClient={setStompClient}
-              secretNumber={secretNumber}
-              privateKey={privateKey}
             />
           ) : (
             homechat && <IconHome />

@@ -3,25 +3,33 @@ import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 
-function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient, setSecretNumber}) {
+function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient }) {
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        const secretNumber = parseInt(data.get('secret') as string);
-        console.log(secretNumber);
-        setNumberPrompt(false);
-        setSecretNumber(secretNumber);
+        const sc = data.get('secret') as string;
+        sessionStorage.setItem('secret-number', sc);
+        console.log('NumberPrompt  :' + sc);
+
+
         const kp = await generateKeys();
-        setPrivateKey(kp.privateKey);
-        console.log(kp.privateKey);
+
+        const privateKey = await exportPrivateKey(kp.privateKey);
+        sessionStorage.setItem('private-key', privateKey);
+        console.log(privateKey);
+
         const key64 = await exportPublicKey(kp.publicKey);
-        console.log(key64);
-        const content = await cipher(key64, 11111);
+        console.log('NumberPrompt  :' + key64);
+
+
+        const content = await cipher(key64, parseInt(sc));
         stompClient.send(
             '/ms/secure',
             {},
             content
         );
+        setNumberPrompt(false);
     }
     return (
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
@@ -118,4 +126,10 @@ function operation(num) {
     num %= 17;
     num++;
     return num;
+}
+async function exportPrivateKey(key) {
+    const exported = await window.crypto.subtle.exportKey("pkcs8", key);
+    const exportedAsString = ab2str(exported);
+    const exportedAsBase64 = window.btoa(exportedAsString);
+    return exportedAsBase64;
 }

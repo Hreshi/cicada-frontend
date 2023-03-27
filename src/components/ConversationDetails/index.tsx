@@ -22,8 +22,6 @@ export default function ConversationDetails(
     setNumberPrompt,
     setStompClient,
     stompClient,
-    secretNumber,
-    privateKey,
   }
 ) {
   const [messageSend, setMessageSend] = useState("");
@@ -33,7 +31,6 @@ export default function ConversationDetails(
   const [avatarUrl, setAvatarUrl] = useState("");
   const [subscription, setSubscription] = useState(null);
   const [friendKey, setFriendKey] = useState<CryptoKey | null>(null);
-  const [firstFrame, setFirstFrame] = useState(0);
 
   const token = sessionStorage.getItem("token");
   const userEmail = sessionStorage.getItem("userEmail");
@@ -45,7 +42,7 @@ export default function ConversationDetails(
   useEffect(() => {
     setConvos([]);
     const fetchUserDetails = async () => {
-      console.log("does it come here");
+      // console.log("does it come here");
       const userData = await fetch(
         `http://localhost:8080/api/user/info/${showChat}`,
         { headers }
@@ -58,7 +55,7 @@ export default function ConversationDetails(
     const fetchConversationDetails = async () => {
       const email = showChat;
 
-      console.log("does it come here");
+      // console.log("does it come here");
       const userData = await fetch(
         `http://localhost:8080/api/user/info/${email}`,
         { headers }
@@ -69,7 +66,7 @@ export default function ConversationDetails(
       setContactEmail(partnerData.email);
       const url = `http://localhost:8080/api/message/${email}/block-count`;
 
-      console.log("does it come here2");
+      // console.log("does it come here2");
       try {
         const response = await fetch(url, { headers });
         if (!response.ok) {
@@ -78,7 +75,7 @@ export default function ConversationDetails(
         const data = parseInt(await response.text());
 
         // Fetch messages in reverse order of blocks
-        console.log("Number of blocks : " + data);
+        // console.log("Number of blocks : " + data);
 
         const messages = [];
         for (let i = 1; i <= data; i++) {
@@ -93,14 +90,14 @@ export default function ConversationDetails(
           if (!blockResponse1.ok) {
             throw new Error(`HTTP error! avi: ${blockResponse1.status}`);
           }
-          console.log("does it come here45");
+          // console.log("does it come here45");
           const blockData = JSON.parse(
             JSON.stringify(parsedMessage.messageList)
           );
 
           // console.log("parsedmessage=" + JSON.stringify(blockData));
-          console.log("here it is");
-          console.log(blockData);
+          // console.log("here it is");
+          // console.log(blockData);
           blockData.forEach((messageData) => {
             // const jsonObject = JSON.parse(messageData.content);
 
@@ -122,7 +119,7 @@ export default function ConversationDetails(
 
         setConvos([...messages]);
       } catch (error) {
-        console.error(error);
+        // console.error(error);
       }
     }
     if (ongoingCall) {
@@ -139,7 +136,7 @@ export default function ConversationDetails(
     const process = async () => {
       const message = JSON.parse(frame.body as string)
       // console.log("Received" + message)
-      console.log("type of message is" + message.messagetype)
+      console.log("TYPE : " + message.messagetype)
       const mt = message.messagetype as string
       if (mt == 'MESSAGE') {
         const messageText = message.content;
@@ -165,11 +162,10 @@ export default function ConversationDetails(
         setOngoingCall(true);
         setIncomingCall(false);
         setOutgoingCall(false);
-        console.log(message.acceptedBy.email);
+        // console.log(message.acceptedBy.email);
         setShowChat(message.acceptedBy.email);
         setNumberPrompt(true);
         sessionStorage.setItem('currentChat', message.acceptedBy.email);
-        setFirstFrame(true);
 
       } else if (mt == 'CALL_REQUEST_REJECTED') {
 
@@ -179,15 +175,16 @@ export default function ConversationDetails(
         setOutgoingCall(false);
         setIncomingCall(false);
         setOngoingCall(false);
-        setFirstFrame(true);
       } else if (mt == 'SECRET') {
         const cnt = message.content as string;
         if (cnt.length > 1000) {
-          console.log('host data');
-          setFriendKey(await decipherKey(cnt, 11111));
+          const secretNumber = parseInt(sessionStorage.getItem('secret-number') as string);
+          console.log('secret number : ' + secretNumber);
+          setFriendKey(await decipherKey(cnt, secretNumber));
         } else {
           console.log('message:' + cnt);
-          const data = cnt;
+
+          const data = await decryptMessage(cnt);
           const author = message.author;
           const date = new Date;
           const teste = {
@@ -198,7 +195,6 @@ export default function ConversationDetails(
           };
           setConvos((convos) => convos.concat(teste));
         }
-        setFirstFrame(firstFrame + 1);
       }
     }
     process();
@@ -209,7 +205,7 @@ export default function ConversationDetails(
       const stomp = Stomp.over(sock);
 
       stomp.connect({}, () => {
-        console.log("Connected to WebSocket");
+        // console.log("Connected to WebSocket");
         stomp.subscribe(`/messages/${userEmail}`, handleMessage);
       });
       setStompClient(stomp);
@@ -222,28 +218,41 @@ export default function ConversationDetails(
   function changeHandler(evt: KeyboardEvent<HTMLInputElement>) {
     const { key } = evt;
 
-    if (key === "Enter" && messageSend != "") {
-      console.log("entered message:" + messageSend);
-      const teste = {
-        me: true,
-        author: userEmail,
-        message: messageSend,
-        date: new Date(),
-      };
-      setConvos((convos) => convos.concat(teste));
-      stompClient.send(
-        `/ms/send/${showChat}`,
-        {},
-        messageSend
-      );
+    const process = async (key) => {
+      if (key === "Enter" && messageSend != "") {
+        // console.log("entered message:" + messageSend);
+        const teste = {
+          me: true,
+          author: userEmail,
+          message: messageSend,
+          date: new Date(),
+        };
+        setConvos((convos) => convos.concat(teste));
+        if (ongoingCall) {
+          const data = await encryptData(friendKey, messageSend);
+          console.log(data);
+          stompClient.send(
+            `/ms/secure`,
+            {},
+            data
+          );
+        } else {
+          stompClient.send(
+            `/ms/send/${showChat}`,
+            {},
+            messageSend
+          );
+        }
 
-      setMessageSend("");
+        setMessageSend("");
+      }
     }
+    process(key)
   }
 
 
   function handleLockClick() {
-    console.log('Send call request to : ' + contactEmail);
+    // console.log('Send call request to : ' + contactEmail);
     const startCall = async () => {
       const response = await fetch(
         `http://localhost:8080/api/stego/request/call/${contactEmail}`,
@@ -260,9 +269,9 @@ export default function ConversationDetails(
           pauseOnHover: false,
         });
         setOutgoingCall(true);
-        console.log('success');
+        // console.log('success');
       } else {
-        console.log('user offline');
+        // console.log('user offline');
         toast.error(`${contactName} is not available`);
       }
     }
@@ -276,7 +285,6 @@ export default function ConversationDetails(
           }
         }
       );
-      setFirstFrame(true);
       setOngoingCall(false);
       setOutgoingCall(false);
     }
@@ -400,7 +408,7 @@ export default function ConversationDetails(
 
 async function decipherKey(hostData, secretNumber) {
   const pem = formatAsPem(decipher(hostData, secretNumber));
-  console.log(pem);
+  console.log("DECIPHER KEY : " + pem);
   const key = await importPublicKey(pem);
   return key;
 }
@@ -416,7 +424,7 @@ async function importPublicKey(pem) {
   // base64 decode the string to get the binary data
   const binaryDerString = window.atob(pemContents);
 
-  console.log(binaryDerString);
+  // console.log(binaryDerString);
   // convert from a binary string to an ArrayBuffer
   const binaryDer = str2ab(binaryDerString);
 
@@ -432,7 +440,10 @@ async function importPublicKey(pem) {
   );
 }
 
-async function decryptMessage(key, message) {
+async function decryptMessage(message) {
+  const content = sessionStorage.getItem('private-key');
+  const pem = formatAsPem(content);
+  const key = await importPrivateKey(pem)
   return await decryptData(key, message);
 }
 function ab2str(buf) {
@@ -508,4 +519,31 @@ async function encryptData(key, data64) {
     dataArrayBuffer
   );
   return btoa(ab2str(encryptedDataBuffer))
+}
+
+async function importPrivateKey(pem) {
+  // fetch the part of the PEM string between header and footer
+  const pemHeader = "-----BEGIN PUBLIC KEY-----";
+  const pemFooter = "-----END PUBLIC KEY-----";
+  const pemContents = pem.substring(
+    pemHeader.length,
+    pem.length - pemFooter.length
+  );
+  // base64 decode the string to get the binary data
+  const binaryDerString = window.atob(pemContents);
+
+  // console.log(binaryDerString);
+  // convert from a binary string to an ArrayBuffer
+  const binaryDer = str2ab(binaryDerString);
+
+  return await window.crypto.subtle.importKey(
+    "pkcs8",
+    binaryDer,
+    {
+      name: "RSA-OAEP",
+      hash: { name: "SHA-256" },
+    },
+    true,
+    ['decrypt']
+  );
 }
