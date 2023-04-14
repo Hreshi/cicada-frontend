@@ -5,25 +5,29 @@ import MessageBalloon from "../MessageBalloon";
 import SendInvitePage from "../Invites/sendinvite";
 import Chat from "./Chat";
 import { ToastContainer, toast } from "react-toastify";
+import Button from "@mui/material/Button";
+import Lock from "@mui/icons-material/Lock";
+import SendIcon from "@mui/icons-material/Send";
+import Tooltip from "@mui/material/Tooltip";
+import Fab from "@mui/material/Fab";
 
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
+import useFetchConversationDetails from "../../middleware/chats";
 
-export default function ConversationDetails(
-  {
-    showChat,
-    incomingCall,
-    outgoingCall,
-    ongoingCall,
-    setOutgoingCall,
-    setOngoingCall,
-    setIncomingCall,
-    setShowChat,
-    setNumberPrompt,
-    setStompClient,
-    stompClient,
-  }
-) {
+export default function ConversationDetails({
+  showChat,
+  incomingCall,
+  outgoingCall,
+  ongoingCall,
+  setOutgoingCall,
+  setOngoingCall,
+  setIncomingCall,
+  setShowChat,
+  setNumberPrompt,
+  setStompClient,
+  stompClient,
+}) {
   const [messageSend, setMessageSend] = useState("");
   const [convos, setConvos] = useState([]);
   const [contactName, setContactName] = useState("");
@@ -51,7 +55,7 @@ export default function ConversationDetails(
       setContactName(partnerData.name);
       setAvatarUrl(partnerData.avatarUrl);
       setContactEmail(partnerData.email);
-    }
+    };
     const fetchConversationDetails = async () => {
       const email = showChat;
 
@@ -104,6 +108,7 @@ export default function ConversationDetails(
             // console.log("jsonObject=" + jsonObject.content.message);
 
             if (messageData.content != "") {
+              console.log("avi=" + messageData.content);
               messages.push({
                 me: messageData.author === userEmail ? 1 : 0,
                 author: messageData.author,
@@ -112,16 +117,14 @@ export default function ConversationDetails(
               });
             }
           });
-
         }
 
-
-
         setConvos([...messages]);
+        console.log(convos);
       } catch (error) {
         // console.error(error);
       }
-    }
+    };
     if (ongoingCall) {
       fetchUserDetails();
     } else {
@@ -131,14 +134,13 @@ export default function ConversationDetails(
 
   const [message, setMessage] = useState([]);
 
-
   function handleMessage(frame) {
     const process = async () => {
-      const message = JSON.parse(frame.body as string)
+      const message = JSON.parse(frame.body as string);
       // console.log("Received" + message)
-      console.log("TYPE : " + message.messagetype)
-      const mt = message.messagetype as string
-      if (mt == 'MESSAGE') {
+      console.log("TYPE : " + message.messagetype);
+      const mt = message.messagetype as string;
+      if (mt == "MESSAGE") {
         const messageText = message.content;
         const author = message.author;
         const messageDate = new Date();
@@ -153,40 +155,36 @@ export default function ConversationDetails(
           };
           setConvos((convos) => convos.concat(teste));
         }
-      } else if (mt == 'CALL_REQUEST') {
-
+      } else if (mt == "CALL_REQUEST") {
         setIncomingCall(true);
-
-      } else if (mt == 'CALL_REQUEST_ACCEPTED') {
-
+      } else if (mt == "CALL_REQUEST_ACCEPTED") {
         setOngoingCall(true);
         setIncomingCall(false);
         setOutgoingCall(false);
         // console.log(message.acceptedBy.email);
         setShowChat(message.acceptedBy.email);
         setNumberPrompt(true);
-        sessionStorage.setItem('currentChat', message.acceptedBy.email);
-
-      } else if (mt == 'CALL_REQUEST_REJECTED') {
-
+        sessionStorage.setItem("currentChat", message.acceptedBy.email);
+      } else if (mt == "CALL_REQUEST_REJECTED") {
         setOutgoingCall(false);
-
-      } else if (mt == 'END_OF_CALL') {
+      } else if (mt == "END_OF_CALL") {
         setOutgoingCall(false);
         setIncomingCall(false);
         setOngoingCall(false);
-      } else if (mt == 'SECRET') {
+      } else if (mt == "SECRET") {
         const cnt = message.content as string;
         if (cnt.length > 1000) {
-          const secretNumber = parseInt(sessionStorage.getItem('secret-number') as string);
-          console.log('secret number : ' + secretNumber);
+          const secretNumber = parseInt(
+            sessionStorage.getItem("secret-number") as string
+          );
+          console.log("secret number : " + secretNumber);
           setFriendKey(await decipherKey(cnt, secretNumber));
         } else {
-          console.log('message:' + cnt);
+          console.log("message:" + cnt);
 
           const data = await decryptMessage(cnt);
           const author = message.author;
-          const date = new Date;
+          const date = new Date();
           const teste = {
             me: false,
             author: author,
@@ -196,7 +194,7 @@ export default function ConversationDetails(
           setConvos((convos) => convos.concat(teste));
         }
       }
-    }
+    };
     process();
   }
   useEffect(() => {
@@ -215,6 +213,27 @@ export default function ConversationDetails(
     };
   }, [userEmail, stompClient, setStompClient]);
 
+  const HandleSendButtonClick = async () => {
+    if (messageSend != "") {
+      // console.log("entered message:" + messageSend);
+      const teste = {
+        me: true,
+        author: userEmail,
+        message: messageSend,
+        date: new Date(),
+      };
+      setConvos((convos) => convos.concat(teste));
+      if (ongoingCall) {
+        const data = await encryptData(friendKey, messageSend);
+        console.log(data);
+        stompClient.send(`/ms/secure`, {}, data);
+      } else {
+        stompClient.send(`/ms/send/${showChat}`, {}, messageSend);
+      }
+
+      setMessageSend("");
+    }
+  };
   function changeHandler(evt: KeyboardEvent<HTMLInputElement>) {
     const { key } = evt;
 
@@ -231,25 +250,16 @@ export default function ConversationDetails(
         if (ongoingCall) {
           const data = await encryptData(friendKey, messageSend);
           console.log(data);
-          stompClient.send(
-            `/ms/secure`,
-            {},
-            data
-          );
+          stompClient.send(`/ms/secure`, {}, data);
         } else {
-          stompClient.send(
-            `/ms/send/${showChat}`,
-            {},
-            messageSend
-          );
+          stompClient.send(`/ms/send/${showChat}`, {}, messageSend);
         }
 
         setMessageSend("");
       }
-    }
-    process(key)
+    };
+    process(key);
   }
-
 
   function handleLockClick() {
     // console.log('Send call request to : ' + contactEmail);
@@ -257,10 +267,10 @@ export default function ConversationDetails(
       const response = await fetch(
         `http://localhost:8080/api/stego/request/call/${contactEmail}`,
         {
-          method: 'get',
+          method: "get",
           headers: {
-            'Authorization': 'Bearer ' + token
-          }
+            Authorization: "Bearer " + token,
+          },
         }
       );
       if (response.ok) {
@@ -274,20 +284,18 @@ export default function ConversationDetails(
         // console.log('user offline');
         toast.error(`${contactName} is not available`);
       }
-    }
+    };
     const endCall = async () => {
-      const response = await fetch(
-        `http://localhost:8080/api/stego/call/end`,
-        {
-          method: 'post',
-          headers: {
-            'Authorization': 'Bearer ' + token
-          }
-        }
-      );
+      const response = await fetch(`http://localhost:8080/api/stego/call/end`, {
+        method: "post",
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      });
       setOngoingCall(false);
       setOutgoingCall(false);
-    }
+    };
+
     if (ongoingCall) {
       endCall();
     } else {
@@ -300,28 +308,56 @@ export default function ConversationDetails(
       <ToastContainer></ToastContainer>
 
       <div className="flex flex-col w-full">
-        <div className="flex justify-between w-full px-4">
-          <div className="flex justify-between bg-[#202c33] w-full h-14">
-            <div className="flex items-center gap-4 h-full">
+        <div className="flex justify-between w-full ">
+          <div className="flex justify-between bg-black w-full h-14 border-b border-gray-500 px-2">
+            <div className="flex items-center gap-4 h-full text-white">
               <Avatar src={avatarUrl} />
-              <h1 className="text-white font-normal">{contactName}</h1>
-              <h5>{contactEmail}</h5>
+              <div className="flex flex-col">
+                <h1 className="text-white font-normal">{contactName}</h1>
+                <h5>{contactEmail}</h5>
+              </div>
             </div>
-            <button onClick={handleLockClick} className="px-4 py-2 text-sm font-medium text-white rounded-lg hover:bg-black ">
-              {ongoingCall ? "UNLOCK" : "LOCK"}
-            </button>
+
+           
+            {/* <Button
+              variant="contained"
+              color={ongoingCall ? "secondary" : "primary"}
+              onClick={handleLockClick}
+              style={{ backgroundColor: ongoingCall ? "#f44336" : "#4caf50" }}
+            >
+              <Lock />{" "}
+              {ongoingCall ? " CLOSE SECRET CHAT" : " START SECRET CHAT"}
+            </Button> */}
+
             <div className="flex items-center text-[#8696a0] gap-2">
-              <svg
-                viewBox="0 0 24 24"
-                width="24"
-                height="24"
-                className="cursor-pointer"
+              
+
+              
+               <Tooltip
+                title={
+                  ongoingCall ? " CLOSE SECRET CHAT" : " START SECRET CHAT"
+                }
+                arrow
               >
-                <path
-                  fill="currentColor"
-                  d="M15.9 14.3H15l-.3-.3c1-1.1 1.6-2.7 1.6-4.3 0-3.7-3-6.7-6.7-6.7S3 6 3 9.7s3 6.7 6.7 6.7c1.6 0 3.2-.6 4.3-1.6l.3.3v.8l5.1 5.1 1.5-1.5-5-5.2zm-6.2 0c-2.6 0-4.6-2.1-4.6-4.6s2.1-4.6 4.6-4.6 4.6 2.1 4.6 4.6-2 4.6-4.6 4.6z"
-                ></path>
-              </svg>
+                <Fab
+                  size="small"
+                  aria-label="add"
+                  onClick={handleLockClick}
+                  style={{
+                    borderRadius: "50%",
+                    backgroundColor: "transparent",
+                    border: ongoingCall
+                      ? "1px solid #f44336"
+                      : "2px solid #4caf50",
+                    color: ongoingCall ? "#f44336" : "#4caf50",
+                    // add any other styles you want to apply to the button here
+                  }}
+                >
+                  <Lock />
+                </Fab>
+              </Tooltip>
+
+
               <svg
                 viewBox="0 0 24 24"
                 width="24"
@@ -333,26 +369,33 @@ export default function ConversationDetails(
                   d="M12 7a2 2 0 1 0-.001-4.001A2 2 0 0 0 12 7zm0 2a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 9zm0 6a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 15z"
                 ></path>
               </svg>
+             
             </div>
           </div>
         </div>
 
         <div
           className="flex flex-col w-full h-full px-24 py-6 overflow-y-auto"
-        /* style={{ backgroundImage: "url('/assets/images/background.jpg')" }}*/
+          style={{ backgroundColor: "black" }}
         >
           {convos.map((conv, index) => {
-
             const { me, message, date } = conv;
             // console.log("date=" + date);
 
             if (message != "")
-              return <MessageBalloon key={index} me={me} message={message} date={date} />;
+              return (
+                <MessageBalloon
+                  key={index}
+                  me={me}
+                  message={message}
+                  date={date}
+                />
+              );
           })}
         </div>
 
-        <footer className="flex items-center bg-[#202c33] w-full h-16 py-3 text-[#8696a0]">
-          <div className="flex py-1 pl-5 gap-3">
+        <footer className="flex items-center bg-black w-full border border-gray-600 text-[#8696a0]">
+          {/* <div className="flex py-1 pl-5 gap-3">
             <svg
               viewBox="0 0 24 24"
               width="24"
@@ -375,19 +418,19 @@ export default function ConversationDetails(
                 d="M1.816 15.556v.002c0 1.502.584 2.912 1.646 3.972s2.472 1.647 3.974 1.647a5.58 5.58 0 0 0 3.972-1.645l9.547-9.548c.769-.768 1.147-1.767 1.058-2.817-.079-.968-.548-1.927-1.319-2.698-1.594-1.592-4.068-1.711-5.517-.262l-7.916 7.915c-.881.881-.792 2.25.214 3.261.959.958 2.423 1.053 3.263.215l5.511-5.512c.28-.28.267-.722.053-.936l-.244-.244c-.191-.191-.567-.349-.957.04l-5.506 5.506c-.18.18-.635.127-.976-.214-.098-.097-.576-.613-.213-.973l7.915-7.917c.818-.817 2.267-.699 3.23.262.5.501.802 1.1.849 1.685.051.573-.156 1.111-.589 1.543l-9.547 9.549a3.97 3.97 0 0 1-2.829 1.171 3.975 3.975 0 0 1-2.83-1.173 3.973 3.973 0 0 1-1.172-2.828c0-1.071.415-2.076 1.172-2.83l7.209-7.211c.157-.157.264-.579.028-.814L11.5 4.36a.572.572 0 0 0-.834.018l-7.205 7.207a5.577 5.577 0 0 0-1.645 3.971z"
               ></path>
             </svg>
-          </div>
-          <div className="flex w-[85%] h-12 ml-3">
+          </div> */}
+          <div className="flex w-[85%] h-12 border border-gray-400 border-t-0 border-r-0 border-b-0">
             <input
               type={"text"}
-              className="bg-[#2a3942] rounded-lg w-full px-3 py-3 text-white"
-              placeholder="Start typing.. "
+              className="bg-black  w-full px-3 py-3 text-white"
+              placeholder={`Write a message for ${contactName}`}
               onKeyDown={(evt) => changeHandler(evt)}
               onChange={(evt) => setMessageSend(evt.target.value)}
               value={messageSend}
             />
           </div>
-          <div className="flex justify-center items-center w-[5%] h-12">
-            <svg
+          <div className="flex justify-center items-center w-[5%] h-12 border border-gray-400 border-t-0 border-r-0 border-b-0 border-l-0">
+          <svg
               viewBox="0 0 24 24"
               width="24"
               height="24"
@@ -395,16 +438,18 @@ export default function ConversationDetails(
             >
               <path
                 fill="currentColor"
-                d="M11.999 14.942c2.001 0 3.531-1.53 3.531-3.531V4.35c0-2.001-1.53-3.531-3.531-3.531S8.469 2.35 8.469 4.35v7.061c0 2.001 1.53 3.531 3.53 3.531zm6.238-3.53c0 3.531-2.942 6.002-6.237 6.002s-6.237-2.471-6.237-6.002H3.761c0 4.001 3.178 7.297 7.061 7.885v3.884h2.354v-3.884c3.884-.588 7.061-3.884 7.061-7.885h-2z"
+                d="M1.816 15.556v.002c0 1.502.584 2.912 1.646 3.972s2.472 1.647 3.974 1.647a5.58 5.58 0 0 0 3.972-1.645l9.547-9.548c.769-.768 1.147-1.767 1.058-2.817-.079-.968-.548-1.927-1.319-2.698-1.594-1.592-4.068-1.711-5.517-.262l-7.916 7.915c-.881.881-.792 2.25.214 3.261.959.958 2.423 1.053 3.263.215l5.511-5.512c.28-.28.267-.722.053-.936l-.244-.244c-.191-.191-.567-.349-.957.04l-5.506 5.506c-.18.18-.635.127-.976-.214-.098-.097-.576-.613-.213-.973l7.915-7.917c.818-.817 2.267-.699 3.23.262.5.501.802 1.1.849 1.685.051.573-.156 1.111-.589 1.543l-9.547 9.549a3.97 3.97 0 0 1-2.829 1.171 3.975 3.975 0 0 1-2.83-1.173 3.973 3.973 0 0 1-1.172-2.828c0-1.071.415-2.076 1.172-2.83l7.209-7.211c.157-.157.264-.579.028-.814L11.5 4.36a.572.572 0 0 0-.834.018l-7.205 7.207a5.577 5.577 0 0 0-1.645 3.971z"
               ></path>
             </svg>
+          </div>
+          <div className="flex justify-center items-center w-[10%] h-12 border border-gray-400 text-purple-600">
+            <SendIcon onClick={HandleSendButtonClick} />
           </div>
         </footer>
       </div>
     </>
   );
 }
-
 
 async function decipherKey(hostData, secretNumber) {
   const pem = formatAsPem(decipher(hostData, secretNumber));
@@ -441,9 +486,9 @@ async function importPublicKey(pem) {
 }
 
 async function decryptMessage(message) {
-  const content = sessionStorage.getItem('private-key');
+  const content = sessionStorage.getItem("private-key");
   const pem = formatAsPem(content);
-  const key = await importPrivateKey(pem)
+  const key = await importPrivateKey(pem);
   return await decryptData(key, message);
 }
 function ab2str(buf) {
@@ -464,11 +509,11 @@ async function decryptData(key: CryptoKey, cipherBase64: string) {
 
   let decryptedDataBuffer = await window.crypto.subtle.decrypt(
     {
-      name: "RSA-OAEP"
+      name: "RSA-OAEP",
     },
     key,
     dataBuffer
-  )
+  );
   return ab2str(decryptedDataBuffer);
 }
 function decipher(host_data, secret) {
@@ -479,26 +524,26 @@ function decipher(host_data, secret) {
     current_number += operation(current_number);
   }
   let dataLength = parseInt(len);
-  let result = new Array()
+  let result = new Array();
 
   for (let i = 0; i < dataLength; i++) {
     result.push(host_data.charAt(current_number));
     current_number += operation(current_number);
   }
-  return result.join('');
+  return result.join("");
 }
 
 function operation(num) {
-  num += (num && ((num << 1) || num));
+  num += num && (num << 1 || num);
   num %= 17;
   num++;
   return num;
 }
 function formatAsPem(str) {
-  var finalString = '-----BEGIN PUBLIC KEY-----\n';
+  var finalString = "-----BEGIN PUBLIC KEY-----\n";
 
   while (str.length > 0) {
-    finalString += str.substring(0, 64) + '\n';
+    finalString += str.substring(0, 64) + "\n";
     str = str.substring(64);
   }
 
@@ -507,18 +552,17 @@ function formatAsPem(str) {
   return finalString;
 }
 
-
 // Encrypt text using public key object
 async function encryptData(key, data64) {
-  let dataArrayBuffer = str2ab(data64)
+  let dataArrayBuffer = str2ab(data64);
   let encryptedDataBuffer = await window.crypto.subtle.encrypt(
     {
-      name: "RSA-OAEP"
+      name: "RSA-OAEP",
     },
     key,
     dataArrayBuffer
   );
-  return btoa(ab2str(encryptedDataBuffer))
+  return btoa(ab2str(encryptedDataBuffer));
 }
 
 async function importPrivateKey(pem) {
@@ -544,6 +588,6 @@ async function importPrivateKey(pem) {
       hash: { name: "SHA-256" },
     },
     true,
-    ['decrypt']
+    ["decrypt"]
   );
 }

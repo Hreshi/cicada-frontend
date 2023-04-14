@@ -5,7 +5,7 @@ import NotificationPanel from "../FloatingOptions";
 import ProfilePage from "../FloatingOptions/Profilepage";
 import SearchPeople from "../FloatingOptions/SearchPeople";
 import axios from "axios";
-import Avatar from "@mui/material/Avatar"
+import Avatar from "@mui/material/Avatar";
 import AllConversations from "../ConversationList/allConversations";
 
 export default function SideBar({
@@ -41,39 +41,32 @@ export default function SideBar({
 
   const [friendsList, setFriendsList] = useState([]);
   useEffect(() => {
-
     async function fetchFriends() {
       const userEmail = sessionStorage.getItem("userEmail");
-      const token = sessionStorage.getItem('token');
-      console.log("Token : " + token)
-      fetch(
-        `http://localhost:8080/api/user/info/${userEmail}`,
-        {
-          method: 'get',
-          headers: {
-            'Authorization': 'Bearer ' + token
-          }
-        }
-      )
+      const token = sessionStorage.getItem("token");
+      console.log("Token : " + token);
+      fetch(`http://localhost:8080/api/user/info/${userEmail}`, {
+        method: "get",
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      })
         .then((response) => response.json())
         .then((data) => {
-          console.log(data.avatarUrl)
+          console.log(data.avatarUrl);
           setName(data.name);
           setEmail(data.email);
           setAvatarImage(data.avatarUrl);
         })
         .catch((error) => console.error(error));
 
-
-
-
       const getFriends = await fetch(
         "http://localhost:8080/api/conversation/my-conversation",
         {
-          method: 'get',
+          method: "get",
           headers: {
-            'Authorization': 'Bearer ' + token
-          }
+            Authorization: "Bearer " + token,
+          },
         }
       );
       const allFriends = await getFriends.json();
@@ -88,7 +81,6 @@ export default function SideBar({
       //       `http://localhost:8080/api/message/${friendEmail}/last-message`,
       //       { headers }
       //     );
-
 
       //     if (getLastMessage.ok) {
 
@@ -143,9 +135,10 @@ export default function SideBar({
             LastMessage: " ",
             lastMessageDate: new Date(),
             me: true,
-            avatarUrl:friend.avatarUrl,
+            avatarUrl: friend.avatarUrl,
           };
-        }));
+        })
+      );
 
       console.log("1");
       setFriendsList(friendsData);
@@ -161,8 +154,8 @@ export default function SideBar({
   const filteredConversationsList =
     search.length > 0
       ? conversationsList.filter((conversationList) =>
-        conversationList.contactName.toLowerCase().includes(search)
-      )
+          conversationList.contactName.toLowerCase().includes(search)
+        )
       : conversationsList;
 
   //console.log(filteredConversationsList)
@@ -219,16 +212,13 @@ export default function SideBar({
   }
 
   return (
-    <div
-      className="flex flex-col w-[480px] h-full bg-[#202c33]"
-      style={{ borderRight: "1px solid rgba(134,150,160,0.15)" }}
-    >
+    <div className="flex flex-col w-[480px] h-full bg-[#1e1e26] border border-gray-600 ">
       <div
-        className="flex items-center justify-between w-full px-4"
+        className="flex items-center justify-between w-full px-4 border border-gray-600 pb-[-15px]"
         id="sidebartop"
       >
         <div
-          className="flex bg-[#202c33] w-full h-14 py-3 items-center"
+          className="flex bg-[#1e1e26] w-full h-14 py-3 items-center "
           onClick={() => Handleclickofprofile()}
         >
           <div className="flex cursor-pointer">
@@ -286,32 +276,32 @@ export default function SideBar({
         </div>
       </div>
 
-      {showaddPeople && (
-        <div className="flex bg-[#111b21] w-full h-max px-3 py-2">
-          <div className="relative w-[95%] h-max">
-            <div className="absolute text-[#AEBAC1] h-full w-9">
-              <svg
-                viewBox="0 0 24 24"
-                width="24"
-                height="24"
-                className="left-[50%] right-[50%] ml-auto mr-auto h-full"
-              >
-                <path
-                  fill="currentColor"
-                  d="M15.009 13.805h-.636l-.22-.219a5.184 5.184 0 0 0 1.256-3.386 5.207 5.207 0 1 0-5.207 5.208 5.183 5.183 0 0 0 3.385-1.255l.221.22v.635l4.004 3.999 1.194-1.195-3.997-4.007zm-4.808 0a3.605 3.605 0 1 1 0-7.21 3.605 3.605 0 0 1 0 7.21z"
-                ></path>
-              </svg>
-            </div>
-            <div className="">
-              <input
-                className="w-[96%] h-9 rounded-lg bg-[#202c33] text-white text-sm px-10"
-                placeholder="Search or start a new conversation"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+      {/* {showaddPeople || ( */}
+      <div className="flex bg-[#111b21] w-full h-max px-3 py-2 border-b border-gray-600">
+        <div className="relative w-[95%] h-max">
+          <div className="absolute text-[#AEBAC1] h-full w-9">
+            <svg
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              className="left-[50%] right-[50%] ml-auto mr-auto h-full"
+            >
+              <path
+                fill="currentColor"
+                d="M15.009 13.805h-.636l-.22-.219a5.184 5.184 0 0 0 1.256-3.386 5.207 5.207 0 1 0-5.207 5.208 5.183 5.183 0 0 0 3.385-1.255l.221.22v.635l4.004 3.999 1.194-1.195-3.997-4.007zm-4.808 0a3.605 3.605 0 1 1 0-7.21 3.605 3.605 0 0 1 0 7.21z"
+              ></path>
+            </svg>
           </div>
-          <div className="flex w-[5%] h-full items-center justify-center">
+          <div className="">
+            <input
+              className="w-[96%] h-9  bg-black text-white text-sm px-10"
+              placeholder="Search or start a new conversation"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+        {/* <div className="flex w-[5%] h-full items-center justify-center">
             <svg
               viewBox="0 0 24 24"
               width="20"
@@ -324,11 +314,14 @@ export default function SideBar({
                 d="M10 18.1h4v-2h-4v2zm-7-12v2h18v-2H3zm3 7h12v-2H6v2z"
               ></path>
             </svg>
-          </div>
-        </div>
-      )}
+          </div> */}
+      </div>
+      {/* )} */}
 
-      <div className="flex flex-col w-full overflow-y-scroll" id="conversation">
+      <div
+        className="flex flex-col w-full overflow-y-scroll bg-blue-800"
+        id="conversation"
+      >
         {/* {chatData.map((conversation, index) => {
           return (        
             <ConversationList
@@ -342,7 +335,6 @@ export default function SideBar({
         {friendsList.map((conversation, index) => {
           const dt = new Date();
           return (
-
             <AllConversations
               key={index}
               isFirstConversation={index == 0}
