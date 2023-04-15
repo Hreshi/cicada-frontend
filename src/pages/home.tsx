@@ -46,7 +46,6 @@ function HomeContent() {
 
   return (
     <div className="flex justify-center" id="Home">
-
       <div className="flex w-full xl:container h-screen xl:py-4">
         <SideBar
           setsendinvite={setsendinvite}
@@ -55,25 +54,30 @@ function HomeContent() {
           ongoingCall={ongoingCall}
         />
 
-        <div className="flex w-[70%] bg-[#222E35]">
-          {
-            incomingCall &&
+        <div
+          className="flex w-[70%] bg-[#222E35]"
+          style={{
+            backgroundImage: "url('/assets/images/layered-waves-haikei.svg')",
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
+            minHeight: "100vh",
+          }}
+        >
+          {incomingCall && (
             <IncomingCall
               setIncomingCall={setIncomingCall}
               setOngoingCall={setOngoingCall}
               setShowChat={setShowChat}
               setNumberPrompt={setNumberPrompt}
             />
-          }
-          {
-            outgoingCall && <OutgoingCall setOutgoingCall={setOutgoingCall} />
-          }
-          {
-            numberPrompt && <NumberPrompt
+          )}
+          {outgoingCall && <OutgoingCall setOutgoingCall={setOutgoingCall} />}
+          {numberPrompt && (
+            <NumberPrompt
               setNumberPrompt={setNumberPrompt}
               stompClient={stompClient}
             />
-          }
+          )}
           {/* for floating options, incoming call,  */}
           {/* <div className="flex justify-center items-center v-screen ">
             <div className="bg-white p-8 rounded-lg shadow-lg float-right mx-auto">

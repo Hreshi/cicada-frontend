@@ -15,12 +15,13 @@ export default function Chat({
 
       <div className="flex justify-between w-full px-4">
 
-        <div className="flex justify-between bg-[#202c33] w-full h-14">
+heyyy
+        <div className="flex justify-between bg-[#202c33] text-white w-full h-14">
 
           <div className="flex items-center gap-4 h-full">
             <Avatar src={avatarUrl} />
             <h1 className="text-white font-normal">{ContactName}</h1>
-            <h5>{contactEmail}</h5>
+            <h5 className="text-white" >{contactEmail}</h5>
             <button>lock</button>
           </div>
 
