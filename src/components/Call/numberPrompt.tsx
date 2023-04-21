@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useEffect } from "react";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -10,103 +11,6 @@ import DialogTitle from "@mui/material/DialogTitle";
 
 import { useTheme } from "@mui/material/styles";
 
-function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient }) {
-  const [open1, setOpen1] = React.useState(true);
-  const theme = useTheme();
-
-  const handleOnclickofStart = () => {
-    setOpen1(false);
-  };
-  const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const sc = data.get("secret") as string;
-    sessionStorage.setItem("secret-number", sc);
-    console.log("NumberPrompt  :" + sc);
-
-    const kp = await generateKeys();
-
-    const privateKey = await exportPrivateKey(kp.privateKey);
-    sessionStorage.setItem("private-key", privateKey);
-    console.log(privateKey);
-
-    const key64 = await exportPublicKey(kp.publicKey);
-    console.log("NumberPrompt  :" + key64);
-
-    const content = await cipher(key64, parseInt(sc));
-    stompClient.send("/ms/secure", {}, content);
-    setNumberPrompt(false);
-  };
-  return (
-    <Box
-      component="form"
-      onSubmit={handleSubmit}
-      noValidate
-      sx={{
-        mt: 1,
-        backgroundColor: "black",
-        color: "white",
-      }}
-    >
-      <Dialog
-        fullScreen={fullScreen}
-        open={open1}
-        aria-labelledby="responsive-dialog-title"
-        PaperProps={{
-          style: {
-            backgroundColor: "white",
-            color: "black",
-          },
-        }}
-      >
-        <DialogTitle id="responsive-dialog-title">
-          {"Enter your secret number"}
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="secret"
-            label="Secret number"
-            name="secret"
-            InputProps={{
-              style: {
-                borderColor: "black",
-              },
-            }}
-            autoFocus
-           
-          />
-        </DialogContent>
-        <DialogActions sx={{ backgroundColor: '#f0f0f5' }}>
-          <Button
-            type="submit"
-            variant="contained"
-            onClick={handleOnclickofStart}
-            sx={{
-              mt: 3,
-              mb: 2,
-              backgroundColor: "green",
-              color: "black",
-              borderColor: "green",
-              "&:hover": {
-                backgroundColor: "darkgreen",
-                borderColor: "darkgreen",
-              },
-            }}
-            fullWidth
-          >
-            Start
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
-  );
-}
-export default NumberPrompt;
 
 async function generateKeys() {
   const keyPair = await window.crypto.subtle.generateKey(
@@ -180,3 +84,175 @@ async function exportPrivateKey(key) {
   const exportedAsBase64 = window.btoa(exportedAsString);
   return exportedAsBase64;
 }
+
+async function generateImage(width, height) {
+  const imageData = generateImageData(width, height);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext('2d');
+  ctx.putImageData(imageData, 0, 0);
+
+  const blob = await toBlob(canvas);
+  addImage(blob);
+}
+
+async function toBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(resolve, 'image/png', 1.0);
+  });
+}
+
+function addImage(blob) {
+  const imageLink = URL.createObjectURL(blob);
+  sessionStorage.setItem('bloblink', imageLink);
+  const image = document.createElement('img');
+  image.src = imageLink;
+  document.body.appendChild(image);
+  console.log('Image added');
+}
+
+function generateImageData(width, height) {
+  const data = generatePixelArray(width * height);
+  const imageData = new ImageData(data, width, height);
+  return imageData;
+}
+
+function generatePixelArray(pixels) {
+  const data = new Uint8ClampedArray(pixels * 4);
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = randomInt();
+    data[i + 1] = randomInt();
+    data[i + 2] = randomInt();
+    data[i + 3] = 255;
+  }
+  return data;
+}
+
+function randomInt() {
+  return Math.floor(Math.random() * 256);
+}
+
+
+function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient }) {
+  const [open1, setOpen1] = React.useState(true);
+  const [blobimage,setblobimage] = React.useState("");
+  const theme = useTheme();
+
+  const handleOnclickofStart = () => {
+    setOpen1(false);
+  };
+  useEffect(  () => {
+      generateImage(100,100);
+
+      var im=sessionStorage.getItem('bloblink');
+      setblobimage(im);
+
+    
+  }, [blobimage]);
+  const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const sc = data.get("secret") as string;
+    sessionStorage.setItem("secret-number", sc);
+    console.log("NumberPrompt  :" + sc);
+
+    const kp = await generateKeys();
+
+    const privateKey = await exportPrivateKey(kp.privateKey);
+    sessionStorage.setItem("private-key", privateKey);
+    console.log(privateKey);
+
+    const key64 = await exportPublicKey(kp.publicKey);
+    console.log("NumberPrompt  :" + key64);
+
+    const content = await cipher(key64, parseInt(sc));
+    stompClient.send("/ms/secure", {}, content);
+    setNumberPrompt(false);
+  };
+  return (
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      noValidate
+      sx={{
+        mt: 1,
+        backgroundColor: "black",
+        color: "white",
+      }}
+    >
+      <Dialog
+        fullScreen={fullScreen}
+        open={open1}
+        aria-labelledby="responsive-dialog-title"
+        PaperProps={{
+          style: {
+            backgroundColor: "white",
+            color: "black",
+          },
+        }}
+      >
+        
+        <DialogContent>
+        <div style={{ display: "flex", alignItems: "center", border: "1px solid black" }}>
+  <div style={{ width: "70%", borderRight: "1px solid black", padding: "20px" }}>
+    <h1>Enter your secret number</h1>
+    <TextField
+      margin="normal"
+      required
+      fullWidth
+      id="secret"
+      label="Secret number"
+      name="secret"
+      InputProps={{
+        style: {
+          borderColor: "black",
+        },
+      }}
+      autoFocus
+    />
+  </div>
+  {blobimage && <div style={{ width: "30%", padding: "15px" }}>
+    <h4 style={{fontSize:"10px"}}>Generated image</h4>
+    <img
+      src={blobimage}
+      alt="placeholder"
+      style={{ width: "100%" }}
+    />
+  </div>
+}
+</div>
+
+        </DialogContent>
+        <DialogActions sx={{ backgroundColor: '#f0f0f5' }}>
+          <Button
+            type="submit"
+            variant="contained"
+            onClick={handleOnclickofStart}
+            sx={{
+              mt: 3,
+              mb: 2,
+              backgroundColor: "green",
+              color: "black",
+              borderColor: "green",
+              "&:hover": {
+                backgroundColor: "darkgreen",
+                borderColor: "darkgreen",
+              },
+            }}
+            fullWidth
+          >
+            Start
+          </Button>
+        </DialogActions>
+        
+      </Dialog>
+      
+    </Box>
+  );
+}
+export default NumberPrompt;
