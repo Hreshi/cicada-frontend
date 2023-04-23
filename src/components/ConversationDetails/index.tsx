@@ -15,6 +15,148 @@ import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
 import useFetchConversationDetails from "../../middleware/chats";
 
+
+async function decipherKey(hostData: string, secretNumber: number) {
+  const pem = formatAsPem(decipher(hostData, secretNumber));
+  console.log("DECIPHER KEY : " + pem);
+  const key = await importPublicKey(pem);
+  return key;
+}
+
+async function importPublicKey(pem: string) {
+  // fetch the part of the PEM string between header and footer
+  const pemHeader = "-----BEGIN PUBLIC KEY-----";
+  const pemFooter = "-----END PUBLIC KEY-----";
+  const pemContents = pem.substring(
+    pemHeader.length,
+    pem.length - pemFooter.length
+  );
+  // base64 decode the string to get the binary data
+  const binaryDerString = window.atob(pemContents);
+
+  // console.log(binaryDerString);
+  // convert from a binary string to an ArrayBuffer
+  const binaryDer = str2ab(binaryDerString);
+
+  return await window.crypto.subtle.importKey(
+    "spki",
+    binaryDer,
+    {
+      name: "RSA-OAEP",
+      hash: "SHA-256",
+    },
+    true,
+    ["encrypt"]
+  );
+}
+
+async function decryptMessage(message: string) {
+  const content = sessionStorage.getItem("private-key");
+  const pem = formatAsPem(content);
+  const key = await importPrivateKey(pem);
+  return await decryptData(key, message);
+}
+function ab2str(buf) {
+  return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+function str2ab(str: string) {
+  const buf = new ArrayBuffer(str.length);
+  const bufView = new Uint8Array(buf);
+  for (let i = 0, strLen = str.length; i < strLen; i++) {
+    bufView[i] = str.charCodeAt(i);
+  }
+  return buf;
+}
+// Decrypt cipher data into plaintext using private key
+async function decryptData(key: CryptoKey, cipherBase64: string) {
+  let binData = atob(cipherBase64);
+  let dataBuffer = str2ab(binData);
+
+  let decryptedDataBuffer = await window.crypto.subtle.decrypt(
+    {
+      name: "RSA-OAEP",
+    },
+    key,
+    dataBuffer
+  );
+  return ab2str(decryptedDataBuffer);
+}
+function decipher(host_data: string, secret: number) {
+  let current_number = operation(secret);
+  let len = "";
+  for (let i = 0; i < 4; i++) {
+    len += host_data.charAt(current_number);
+    current_number += operation(current_number);
+  }
+  let dataLength = parseInt(len);
+  let result = new Array();
+
+  for (let i = 0; i < dataLength; i++) {
+    result.push(host_data.charAt(current_number));
+    current_number += operation(current_number);
+  }
+  return result.join("");
+}
+
+function operation(num: number) {
+  num += num && (num << 1 || num);
+  num %= 17;
+  num++;
+  return num;
+}
+function formatAsPem(str) {
+  var finalString = "-----BEGIN PUBLIC KEY-----\n";
+
+  while (str.length > 0) {
+    finalString += str.substring(0, 64) + "\n";
+    str = str.substring(64);
+  }
+
+  finalString = finalString + "-----END PUBLIC KEY-----";
+  const keyPem = finalString;
+  return finalString;
+}
+
+// Encrypt text using public key object
+async function encryptData(key, data64) {
+  let dataArrayBuffer = str2ab(data64);
+  let encryptedDataBuffer = await window.crypto.subtle.encrypt(
+    {
+      name: "RSA-OAEP",
+    },
+    key,
+    dataArrayBuffer
+  );
+  return btoa(ab2str(encryptedDataBuffer));
+}
+
+async function importPrivateKey(pem: string) {
+  // fetch the part of the PEM string between header and footer
+  const pemHeader = "-----BEGIN PUBLIC KEY-----";
+  const pemFooter = "-----END PUBLIC KEY-----";
+  const pemContents = pem.substring(
+    pemHeader.length,
+    pem.length - pemFooter.length
+  );
+  // base64 decode the string to get the binary data
+  const binaryDerString = window.atob(pemContents);
+
+  // console.log(binaryDerString);
+  // convert from a binary string to an ArrayBuffer
+  const binaryDer = str2ab(binaryDerString);
+
+  return await window.crypto.subtle.importKey(
+    "pkcs8",
+    binaryDer,
+    {
+      name: "RSA-OAEP",
+      hash: { name: "SHA-256" },
+    },
+    true,
+    ["decrypt"]
+  );
+}
+
 export default function ConversationDetails({
   showChat,
   incomingCall,
@@ -451,143 +593,3 @@ export default function ConversationDetails({
   );
 }
 
-async function decipherKey(hostData, secretNumber) {
-  const pem = formatAsPem(decipher(hostData, secretNumber));
-  console.log("DECIPHER KEY : " + pem);
-  const key = await importPublicKey(pem);
-  return key;
-}
-
-async function importPublicKey(pem) {
-  // fetch the part of the PEM string between header and footer
-  const pemHeader = "-----BEGIN PUBLIC KEY-----";
-  const pemFooter = "-----END PUBLIC KEY-----";
-  const pemContents = pem.substring(
-    pemHeader.length,
-    pem.length - pemFooter.length
-  );
-  // base64 decode the string to get the binary data
-  const binaryDerString = window.atob(pemContents);
-
-  // console.log(binaryDerString);
-  // convert from a binary string to an ArrayBuffer
-  const binaryDer = str2ab(binaryDerString);
-
-  return await window.crypto.subtle.importKey(
-    "spki",
-    binaryDer,
-    {
-      name: "RSA-OAEP",
-      hash: "SHA-256",
-    },
-    true,
-    ["encrypt"]
-  );
-}
-
-async function decryptMessage(message) {
-  const content = sessionStorage.getItem("private-key");
-  const pem = formatAsPem(content);
-  const key = await importPrivateKey(pem);
-  return await decryptData(key, message);
-}
-function ab2str(buf) {
-  return String.fromCharCode.apply(null, new Uint8Array(buf));
-}
-function str2ab(str) {
-  const buf = new ArrayBuffer(str.length);
-  const bufView = new Uint8Array(buf);
-  for (let i = 0, strLen = str.length; i < strLen; i++) {
-    bufView[i] = str.charCodeAt(i);
-  }
-  return buf;
-}
-// Decrypt cipher data into plaintext using private key
-async function decryptData(key: CryptoKey, cipherBase64: string) {
-  let binData = atob(cipherBase64);
-  let dataBuffer = str2ab(binData);
-
-  let decryptedDataBuffer = await window.crypto.subtle.decrypt(
-    {
-      name: "RSA-OAEP",
-    },
-    key,
-    dataBuffer
-  );
-  return ab2str(decryptedDataBuffer);
-}
-function decipher(host_data, secret) {
-  let current_number = operation(secret);
-  let len = "";
-  for (let i = 0; i < 4; i++) {
-    len += host_data.charAt(current_number);
-    current_number += operation(current_number);
-  }
-  let dataLength = parseInt(len);
-  let result = new Array();
-
-  for (let i = 0; i < dataLength; i++) {
-    result.push(host_data.charAt(current_number));
-    current_number += operation(current_number);
-  }
-  return result.join("");
-}
-
-function operation(num) {
-  num += num && (num << 1 || num);
-  num %= 17;
-  num++;
-  return num;
-}
-function formatAsPem(str) {
-  var finalString = "-----BEGIN PUBLIC KEY-----\n";
-
-  while (str.length > 0) {
-    finalString += str.substring(0, 64) + "\n";
-    str = str.substring(64);
-  }
-
-  finalString = finalString + "-----END PUBLIC KEY-----";
-  const keyPem = finalString;
-  return finalString;
-}
-
-// Encrypt text using public key object
-async function encryptData(key, data64) {
-  let dataArrayBuffer = str2ab(data64);
-  let encryptedDataBuffer = await window.crypto.subtle.encrypt(
-    {
-      name: "RSA-OAEP",
-    },
-    key,
-    dataArrayBuffer
-  );
-  return btoa(ab2str(encryptedDataBuffer));
-}
-
-async function importPrivateKey(pem) {
-  // fetch the part of the PEM string between header and footer
-  const pemHeader = "-----BEGIN PUBLIC KEY-----";
-  const pemFooter = "-----END PUBLIC KEY-----";
-  const pemContents = pem.substring(
-    pemHeader.length,
-    pem.length - pemFooter.length
-  );
-  // base64 decode the string to get the binary data
-  const binaryDerString = window.atob(pemContents);
-
-  // console.log(binaryDerString);
-  // convert from a binary string to an ArrayBuffer
-  const binaryDer = str2ab(binaryDerString);
-
-  return await window.crypto.subtle.importKey(
-    "pkcs8",
-    binaryDer,
-    {
-      name: "RSA-OAEP",
-      hash: { name: "SHA-256" },
-    },
-    true,
-    ["decrypt"]
-  );
-}
