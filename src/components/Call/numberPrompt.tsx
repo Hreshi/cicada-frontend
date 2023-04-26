@@ -38,46 +38,6 @@ async function exportPublicKey(key) {
   return key64;
 }
 
-// cipher into random data
-
-const characters =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-const HOST_SIZE = 10000;
-async function cipher(data64, secret) {
-  const lengthString = getLengthString(data64.length);
-  let current_number = operation(secret);
-
-  const result = new Array(HOST_SIZE);
-  let index = 0;
-  data64 = lengthString + data64;
-
-  for (let i = 0; i < HOST_SIZE; i++) {
-    result[i] = generateRandomBase64Char();
-    if (index < data64.length && i == current_number) {
-      result[i] = data64.charAt(index++);
-      current_number += operation(current_number);
-    }
-  }
-  return result.join("");
-}
-
-function getLengthString(len) {
-  let lengthString = len + "";
-  while (lengthString.length < 4) {
-    lengthString = "0" + lengthString;
-  }
-  return lengthString;
-}
-function generateRandomBase64Char() {
-  const randomIndex = Math.floor(Math.random() * characters.length);
-  return characters.charAt(randomIndex);
-}
-function operation(num) {
-  num += num && (num << 1 || num);
-  num %= 17;
-  num++;
-  return num;
-}
 async function exportPrivateKey(key) {
   const exported = await window.crypto.subtle.exportKey("pkcs8", key);
   const exportedAsString = ab2str(exported);
@@ -108,6 +68,9 @@ async function toBlob(canvas) {
 function addImage(blob) {
   const imageLink = URL.createObjectURL(blob);
   sessionStorage.setItem('bloblink', imageLink);
+  const image = document.createElement('img');
+  image.src = imageLink;
+  // document.body.appendChild(image);
   // const image = document.createElement('img');
   // image.src = imageLink;
   // document.body.appendChild(image);
@@ -138,27 +101,36 @@ function randomInt() {
 
 function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient }) {
   const [open1, setOpen1] = React.useState(true);
-  const [blobimage,setblobimage] = React.useState("");
+  const [blobImage, setBlobImage] = React.useState("");
+  const [generated, setGenerated] = React.useState(false)
+  const [secret, setSecret] = React.useState("");
   const theme = useTheme();
 
+  const handleInputChange = (event) => {
+    setSecret(event.target.value);
+  };
   const handleOnclickofStart = () => {
     setOpen1(false);
   };
-  useEffect(  () => {
-      generateImage(100,100);
+  useEffect(() => {
+    const generate = async () => {
+      await generateImage(100, 100);
 
-      var im=sessionStorage.getItem('bloblink');
-      setblobimage(im);
+      var image = sessionStorage.getItem('bloblink');
+      setBlobImage(image);
+      setGenerated(true);
+    }
+    if(!generated) generate();
 
-    
-  }, []);
-
+  }, [blobImage]);
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const sc = data.get("secret") as string;
+// event: React.FormEvent<HTMLFormElement>
+  const handleSubmit = async () => {
+    setOpen1(false);
+    // event.preventDefault();
+    // const data = new FormData(event.currentTarget);
+    // const sc = data.get("secret") as string;
+    const sc = secret
     sessionStorage.setItem("secret-number", sc);
     console.log("NumberPrompt  :" + sc);
 
@@ -171,10 +143,39 @@ function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient }) {
     const key64 = await exportPublicKey(kp.publicKey);
     console.log("NumberPrompt  :" + key64);
 
-    const content = await cipher(key64, parseInt(sc));
-    stompClient.send("/ms/secure", {}, content);
+    // const content = await cipher(key64, parseInt(sc));
+    // stompClient.send("/ms/secure", {}, content);
+    const imageLink = sessionStorage.getItem('bloblink');
+    const link = await cipher_data(imageLink, sc, key64);
+    await uploadFile(link)
+    
     setNumberPrompt(false);
   };
+  async function uploadFile(blobLink) {
+    try {
+      const response = await fetch(blobLink);
+      const blob = await response.blob();
+      const formData = new FormData();
+      formData.append('image', blob);
+  
+      const uploadResponse = await fetch('http://localhost:8080/api/stego/upload/image', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + sessionStorage.getItem('token') as string
+        },
+        body: formData
+      });
+  
+      if (uploadResponse.ok) {
+        console.log('File uploaded successfully');
+      } else {
+        console.error('Failed to upload file');
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  
   return (
     <Box
       component="form"
@@ -197,43 +198,45 @@ function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient }) {
           },
         }}
       >
-        
+
         <DialogContent>
-        <div style={{ display: "flex", alignItems: "center", border: "1px solid black" }}>
-  <div style={{ width: "70%", borderRight: "1px solid black", padding: "20px" }}>
-    <h1>Enter your secret number</h1>
-    <TextField
-      margin="normal"
-      required
-      fullWidth
-      id="secret"
-      label="Secret number"
-      name="secret"
-      InputProps={{
-        style: {
-          borderColor: "black",
-        },
-      }}
-      autoFocus
-    />
-  </div>
-  {blobimage && <div style={{ width: "30%", padding: "15px" }}>
-    <h4 style={{fontSize:"10px"}}>Generated image</h4>
-    <img
-      src={blobimage}
-      alt="placeholder"
-      style={{ width: "100%" }}
-    />
-  </div>
-}
-</div>
+          <div style={{ display: "flex", alignItems: "center", border: "1px solid black" }}>
+            <div style={{ width: "70%", borderRight: "1px solid black", padding: "20px" }}>
+              <h1>Enter your secret code</h1>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="secret"
+                label="Secret"
+                name="secret"
+                value = {secret}
+                onChange={handleInputChange}
+                InputProps={{
+                  style: {
+                    borderColor: "black",
+                  },
+                }}
+                autoFocus
+              />
+            </div>
+            {blobImage && <div style={{ width: "30%", padding: "15px" }}>
+              <h4 style={{ fontSize: "10px" }}>Generated image</h4>
+              <img
+                src={blobImage}
+                alt="placeholder"
+                style={{ width: "100%" }}
+              />
+            </div>
+            }
+          </div>
 
         </DialogContent>
         <DialogActions sx={{ backgroundColor: '#f0f0f5' }}>
           <Button
             type="submit"
             variant="contained"
-            onClick={handleOnclickofStart}
+            onClick={handleSubmit}
             sx={{
               mt: 3,
               mb: 2,
@@ -250,10 +253,112 @@ function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient }) {
             Start
           </Button>
         </DialogActions>
-        
+
       </Dialog>
-      
+
     </Box>
   );
 }
 export default NumberPrompt;
+
+
+
+// cipher data into image
+// Given the url of image, secret and message cipher the message into image.
+
+// 1) Get clamped array of bytes
+// 2) Cipher data into array
+// 3) Create an image with the updated array and return url
+
+
+async function cipher_data(imageUrl, secret, message) {
+  const img = await loadImageFromUrl(imageUrl);
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const pixelBytes = imageData.data;
+  const messageBytes = get_message_bytes(message);
+  cipher(pixelBytes, messageBytes, secret);
+
+  const imageLink = await createImage(pixelBytes, canvas.width, canvas.height);
+  sessionStorage.setItem('link', imageLink);
+  return imageLink;
+}
+async function createImage(pixelBytes, width, height) {
+  const imageData = new ImageData(pixelBytes, width, height);
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.putImageData(imageData, 0, 0);
+  const image = await blob(canvas);
+  return URL.createObjectURL(image);
+}
+async function blob(canvas) {
+  return new Promise((resolve, reject) => {
+      canvas.toBlob(resolve, 'image/png', 1.0)
+  });
+}
+function cipher(pixelBytes, messageBytes, secret) {
+  const mod = Math.floor((pixelBytes.length - pixelBytes.length / 4) % 53);
+  if (mod <= 0) console.log("Data larger than host data");
+
+  let nextPosition = (value(secret) % mod) + 1;
+  let realIndex = 0;
+
+  for (let i = 0, j = 0; i < pixelBytes.length && j < messageBytes.length; i++) {
+      if ((i + 1) % 4 == 0) continue;
+      if (realIndex == nextPosition) {
+          pixelBytes[i] = messageBytes[j++];
+          nextPosition += (nextPosition && ((nextPosition << 1) || nextPosition)) % mod;
+          nextPosition++;
+      }
+      realIndex++;
+  }
+}
+function value(secret) {
+  let ans = 1;
+  for (let i = 0; i < secret.length; i++) {
+      ans *= (secret.charCodeAt(i)) & (0b1111_1111);
+      ans %= 1000000007;
+  }
+  return ans;
+}
+async function get_pixel_bytes(imageUrl) {
+  const img = await loadImageFromUrl(imageUrl);
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  return imageData;
+}
+
+function loadImageFromUrl(imageUrl) {
+  return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = imageUrl;
+  });
+}
+
+function get_message_bytes(message) {
+  let length = message.length;
+  const bytes = new Uint8Array(length + 2);
+  bytes[1] = (length & (0b1111_1111));
+  length = length >> 8;
+  bytes[0] = (length&(0b1111_1111));
+  console.log(bytes[0]+" : " + bytes[1]);
+
+  for (let i = 0; i < message.length; i++) {
+      bytes[i + 2] = message.charCodeAt(i) & (0b1111_1111);
+  }
+  return bytes;
+}
