@@ -81,22 +81,22 @@ async function decryptData(key: CryptoKey, cipherBase64: string) {
   );
   return ab2str(decryptedDataBuffer);
 }
-function decipher(host_data: string, secret: number) {
-  let current_number = operation(secret);
-  let len = "";
-  for (let i = 0; i < 4; i++) {
-    len += host_data.charAt(current_number);
-    current_number += operation(current_number);
-  }
-  let dataLength = parseInt(len);
-  let result = new Array();
+// function decipher(host_data: string, secret: number) {
+//   let current_number = operation(secret);
+//   let len = "";
+//   for (let i = 0; i < 4; i++) {
+//     len += host_data.charAt(current_number);
+//     current_number += operation(current_number);
+//   }
+//   let dataLength = parseInt(len);
+//   let result = new Array();
 
-  for (let i = 0; i < dataLength; i++) {
-    result.push(host_data.charAt(current_number));
-    current_number += operation(current_number);
-  }
-  return result.join("");
-}
+//   for (let i = 0; i < dataLength; i++) {
+//     result.push(host_data.charAt(current_number));
+//     current_number += operation(current_number);
+//   }
+//   return result.join("");
+// }
 
 function operation(num: number) {
   num += num && (num << 1 || num);
@@ -335,6 +335,10 @@ export default function ConversationDetails({
           };
           setConvos((convos) => convos.concat(teste));
         }
+      } else if(mt == "STEGO_IMAGE") {
+        const blobLink = message.imageLink;
+        const key64 = await getKey(blobLink);
+        setFriendKey(await importPublicKey(formatAsPem(key64)));
       }
     };
     process();
@@ -444,7 +448,13 @@ export default function ConversationDetails({
       startCall();
     }
   }
-
+  async function getKey(url) {
+    const response = await fetch('http://localhost:8080'+url);
+    const blob = await response.blob();
+    const imageLink = URL.createObjectURL(blob);
+    const secret = sessionStorage.getItem('secret-number');
+    return await decipher(imageLink, secret);
+  }
   return (
     <>
       <ToastContainer></ToastContainer>
@@ -593,3 +603,80 @@ export default function ConversationDetails({
   );
 }
 
+
+// load image using url
+// get pixel bytes
+
+async function decipher(url, secret) {
+  // const url = sessionStorage.getItem('link');
+  const bytes = await get_pixel_bytes(url);
+  return decipherFromBytes(bytes, secret);
+}
+function decipherFromBytes(pixelBytes, secret) {
+  const mod = Math.floor((pixelBytes.length - pixelBytes.length / 4) % 53);
+  if (mod <= 0) console.log("Data larger than host data");
+
+  let result = '';
+  let nextPosition = (value(secret) % mod) + 1;
+  let realIndex = 0;
+  let len = 2;
+  let calc = true;
+  for (let i = 0; i < pixelBytes.length; i++) {
+      if ((i + 1) % 4 == 0) continue;
+      if (realIndex == nextPosition) {
+          let byte = pixelBytes[i];
+          result += String.fromCharCode(byte);
+          if (calc && result.length == 2) {
+              calc = false;
+              len = result.charCodeAt(0);
+              len = len << 8;
+              len |= result.charCodeAt(1);
+              result = '';
+          }
+          nextPosition += (nextPosition && ((nextPosition << 1) || nextPosition)) % mod;
+          nextPosition++;
+          // console.log(realIndex + " :next:  "+nextPosition);
+          if (result.length >= len) {
+              console.log("breaking");
+              break;
+          }
+      }
+      realIndex++;
+  }
+  return result;
+}
+function toInt(result) {
+  let ans = 0;
+  const first = result[0], second = result[1];
+  ans |= first;
+  ans <<= 8;
+  ans |= second;
+  return ans;
+}
+async function get_pixel_bytes(imageUrl) {
+  const img = await loadImageFromUrl(imageUrl);
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  return imageData.data;
+}
+
+function loadImageFromUrl(imageUrl) {
+  return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = imageUrl;
+  });
+}
+function value(secret) {
+  let ans = 1;
+  for (let i = 0; i < secret.length; i++) {
+      ans *= (secret.charCodeAt(i)) & (0b1111_1111);
+      ans %= 1000000007;
+  }
+  return ans;
+}

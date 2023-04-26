@@ -5,14 +5,11 @@ import Stack from '@mui/material/Stack';
 import CircularProgress from '@mui/material/CircularProgress';
 
 export default function Home() {
-  const [userEmail, setUserEmail] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     userAuthorized().then((auth) => {
       if (auth) {
-        setIsLoggedIn(true)
         router.push('/home')
       } else {
         router.push('/login');
