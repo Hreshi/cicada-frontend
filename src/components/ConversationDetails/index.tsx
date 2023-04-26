@@ -29,12 +29,12 @@ import { Stomp } from "@stomp/stompjs";
 import useFetchConversationDetails from "../../middleware/chats";
 import { TextField } from "@mui/material";
 
-async function decipherKey(hostData: string, secretNumber: number) {
-  const pem = formatAsPem(decipher(hostData, secretNumber));
-  console.log("DECIPHER KEY : " + pem);
-  const key = await importPublicKey(pem);
-  return key;
-}
+// async function decipherKey(hostData: string, secretNumber: string) {
+//   const pem = formatAsPem(decipher(hostData, secretNumber));
+//   console.log("DECIPHER KEY : " + pem);
+//   const key = await importPublicKey(pem);
+//   return key;
+// }
 
 async function importPublicKey(pem: string) {
   // fetch the part of the PEM string between header and footer
@@ -277,14 +277,25 @@ export default function ConversationDetails({
 
             // console.log("jsonObject=" + jsonObject.content.message);
 
-            if (messageData.content != "") {
-              console.log("avi=" + messageData.content);
+            if(messageData.imageLink) {
+              const link = messageData.imageLink;
               messages.push({
                 me: messageData.author === userEmail ? 1 : 0,
-                author: messageData.author,
-                message: messageData.content,
                 date: new Date(messageData.date),
+                messageType: "image",
+                imageLink: `http://localhost:8080${link}`,
               });
+            } else {
+              if (messageData.content != "") {
+                console.log("avi=" + messageData.imageLink);
+                const link = messageData.imageLink;
+                messages.push({
+                  me: messageData.author === userEmail ? 1 : 0,
+                  message: messageData.content,
+                  date: new Date(messageData.date),
+                  messageType:"text",
+                });
+              }
             }
           });
         }
@@ -367,6 +378,8 @@ export default function ConversationDetails({
         const blobLink = message.imageLink;
         const key64 = await getKey(blobLink);
         setFriendKey(await importPublicKey(formatAsPem(key64)));
+      } else if (mt == "IMAGE") {
+
       }
     };
     process();
@@ -495,6 +508,7 @@ export default function ConversationDetails({
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    console.log(file);
     if (file) {
       setImageFile(file);
       const reader = new FileReader();
@@ -518,14 +532,58 @@ export default function ConversationDetails({
     fileInput.click();
   };
 
-  function HandleSubmitToEncrypt()
+  async function HandleSubmitToEncrypt()
   {
-    alert(messagetoencrypt);
-    //setOpenimageUploadPromt(false); //uncomment this to close the dialog box
+    // alert(messagetoencrypt);
     //imageFile //this is actual image ,you can send this request directly after doing encryption
     //messagetoencrypt //this is the message you want to encrypt
-
-
+    const url = `http://localhost:8080/api/image/send/${showChat}`;
+    const blob = await fileToBlob(imageFile);
+    const localUrl = URL.createObjectURL(blob);
+    addImageToConversation(localUrl);
+    await uploadFile(blob, url)
+    setOpenimageUploadPromt(false);
+  }
+  function addImageToConversation(url) {
+    const message = {
+      me: true,
+      imageLink:url,
+      date: new Date(),
+    };
+    setConvos((convos) => convos.concat(message));
+  }
+  function fileToBlob(file) {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const blob = new Blob([reader.result], { type: file.type });
+        resolve(blob);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+  
+  async function uploadFile(blob, url) {
+    try {
+      const formData = new FormData();
+      formData.append('image', blob);
+  
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization' : `Bearer ${sessionStorage.getItem('token') as string}` 
+        },
+        body: formData
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Failed to upload file: ${response.status}`);
+      }
+  
+      console.log('File uploaded successfully!');
+    } catch (error) {
+      console.error(error);
+    }
   }
   return (
     <>
@@ -538,7 +596,7 @@ export default function ConversationDetails({
         onClose={handleclickonattachmentopenclose}
         aria-describedby="alert-dialog-slide-description"
       >
-        <DialogTitle>{"Encrypt your message in image"}</DialogTitle>
+        {/* <DialogTitle>{"Encrypt your message in image"}</DialogTitle> */}
         <div
           style={{
             border: "1px solid black",
@@ -555,12 +613,12 @@ export default function ConversationDetails({
         </div>
 
         <div style={{ padding: "16px" }}>
-          <TextField
+          {/* <TextField
             variant="outlined"
             fullWidth
             label="Add your message to decrypt"
             onChange={(e) => {setMessagetoencrypt(e.target.value)}}
-          />
+          /> */}
         </div>
         <div
           style={{
@@ -641,7 +699,7 @@ export default function ConversationDetails({
           style={{ backgroundColor: "black" }}
         >
           {convos.map((conv, index) => {
-            const { me, message, date } = conv;
+            const { me, message, date, imageLink, messageType } = conv;
             // console.log("date=" + date);
 
             if (message != "")
@@ -651,6 +709,8 @@ export default function ConversationDetails({
                   me={me}
                   message={message}
                   date={date}
+                  messageType={messageType}
+                  imageLink={imageLink}
                 />
               );
           })}

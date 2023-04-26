@@ -16,7 +16,6 @@ const jwt = require("jsonwebtoken");
 import AvatarChooser from "./avatarchooser"; // import the AvatarChooser component
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-//import { useRouter } from "next/router";
 import { useRouter } from "next/router";
 import { json } from "stream/consumers";
 import { LocalAtm } from "@material-ui/icons";
@@ -58,16 +57,17 @@ async function sendRegistrationRequest(data: {
       sessionStorage.setItem("token", token as string);
       //const router = useRouter();
       //router.push('/home')
-      
+      return true;
     }
   } catch (error) {
     console.error(error);
   }
+  return false;
 }
 
 export default function SignUp({ isRegistered, setIsRegistered }) {
   const [avatarFile, setAvatarFile] = React.useState<File | null>(null); // add state to hold the chosen avatar file
-
+  const router = useRouter();
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       setAvatarFile(event.target.files[0]);
@@ -89,7 +89,9 @@ export default function SignUp({ isRegistered, setIsRegistered }) {
         password: data.get("password") as string,
         avatar: avatarFile as File,
       });
-
+      if(response) {
+        router.push("/home");
+      }
       // do something with the token or redirect to another page
       // setIsRegistered(true);
     } catch (error) {

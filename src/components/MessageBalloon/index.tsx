@@ -13,7 +13,8 @@ interface MessageBalloonProps {
   me: boolean;
   message: string;
   date: Date;
-  //messageType?: string;
+  messageType: string;
+  imageLink:string;
 }
 
 const Transition = forwardRef(function Transition(
@@ -28,7 +29,7 @@ const Transition = forwardRef(function Transition(
 
 export default function MessageBalloon(props: MessageBalloonProps) {
   const [time, setTime] = useState("");
-  const messageType = "image";
+  // const messageType = "image";
   //  const messageType = Math.random() < 0.5 ? "text" : "image";
 
   const [open,setOpen]=useState(false);
@@ -37,7 +38,7 @@ export default function MessageBalloon(props: MessageBalloonProps) {
 
   //  const { me, message, date, messageType } = props;
 
-  const { me, message, date } = props;
+  const { me, message, date, messageType, imageLink } = props;
 
   // const date = new Date(datestring);
 
@@ -81,7 +82,7 @@ export default function MessageBalloon(props: MessageBalloonProps) {
       >
         {messageType === "image" ? (
           <img
-            src="https://hips.hearstapps.com/hmg-prod/images/cute-cat-photos-1593441022.jpg"
+            src={imageLink}
             alt="attachment preview"
             className="max-w-full max-h-60 object-contain rounded-lg"
             onClick={()=>setOpen(true)}
