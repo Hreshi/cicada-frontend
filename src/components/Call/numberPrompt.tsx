@@ -100,8 +100,12 @@ function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient }) {
   const [open1, setOpen1] = React.useState(true);
   const [blobImage, setBlobImage] = React.useState("");
   const [generated, setGenerated] = React.useState(false)
+  const [secret, setSecret] = React.useState("");
   const theme = useTheme();
 
+  const handleInputChange = (event) => {
+    setSecret(event.target.value);
+  };
   const handleOnclickofStart = () => {
     setOpen1(false);
   };
@@ -123,7 +127,7 @@ function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient }) {
     // event.preventDefault();
     // const data = new FormData(event.currentTarget);
     // const sc = data.get("secret") as string;
-    const sc = 'secret'
+    const sc = secret
     sessionStorage.setItem("secret-number", sc);
     console.log("NumberPrompt  :" + sc);
 
@@ -203,6 +207,8 @@ function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient }) {
                 id="secret"
                 label="Secret"
                 name="secret"
+                value = {secret}
+                onChange={handleInputChange}
                 InputProps={{
                   style: {
                     borderColor: "black",
