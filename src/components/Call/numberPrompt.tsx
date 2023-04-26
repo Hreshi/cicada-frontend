@@ -108,9 +108,9 @@ async function toBlob(canvas) {
 function addImage(blob) {
   const imageLink = URL.createObjectURL(blob);
   sessionStorage.setItem('bloblink', imageLink);
-  const image = document.createElement('img');
-  image.src = imageLink;
-  document.body.appendChild(image);
+  // const image = document.createElement('img');
+  // image.src = imageLink;
+  // document.body.appendChild(image);
   console.log('Image added');
 }
 
@@ -151,7 +151,8 @@ function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient }) {
       setblobimage(im);
 
     
-  }, [blobimage]);
+  }, []);
+
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {

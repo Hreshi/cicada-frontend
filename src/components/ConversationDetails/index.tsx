@@ -184,6 +184,7 @@ export default function ConversationDetails({
   const headers = {
     Authorization: `Bearer ${token}`,
   };
+  //console.log("convos"+convos);
 
   useEffect(() => {
     setConvos([]);
@@ -369,6 +370,7 @@ export default function ConversationDetails({
         const data = await encryptData(friendKey, messageSend);
         console.log(data);
         stompClient.send(`/ms/secure`, {}, data);
+        console.log(data);
       } else {
         stompClient.send(`/ms/send/${showChat}`, {}, messageSend);
       }
@@ -521,6 +523,7 @@ export default function ConversationDetails({
           style={{ backgroundColor: "black" }}
         >
           {convos.map((conv, index) => {
+            
             const { me, message, date } = conv;
             // console.log("date=" + date);
 
