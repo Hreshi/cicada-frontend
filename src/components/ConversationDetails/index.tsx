@@ -326,15 +326,29 @@ export default function ConversationDetails({
         const author = message.author;
         const messageDate = new Date();
         //const dt = new Date(parsedContent.content.date);
-
-        if (messageText != "") {
-          const teste = {
-            me: false,
-            author: author,
-            message: messageText,
-            date: messageDate,
+        
+        console.log(message);
+        
+        if(message.imageLink) {
+          const msg = {
+            me:false,
+            author:author,
+            imageLink:`http://localhost:8080${message.imageLink}`,
+            messageType:"image",
+            date:messageDate,
           };
-          setConvos((convos) => convos.concat(teste));
+          setConvos((convos) => convos.concat(msg));
+        } else {
+          if (messageText != "") {
+            const msg = {
+              me: false,
+              author: author,
+              message: messageText,
+              messageType:"text",
+              date: messageDate,
+            };
+            setConvos((convos) => convos.concat(msg));
+          }
         }
       } else if (mt == "CALL_REQUEST") {
         setIncomingCall(true);
@@ -549,6 +563,7 @@ export default function ConversationDetails({
       me: true,
       imageLink:url,
       date: new Date(),
+      messageType:"image",
     };
     setConvos((convos) => convos.concat(message));
   }
