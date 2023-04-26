@@ -71,6 +71,9 @@ function addImage(blob) {
   const image = document.createElement('img');
   image.src = imageLink;
   // document.body.appendChild(image);
+  // const image = document.createElement('img');
+  // image.src = imageLink;
+  // document.body.appendChild(image);
   console.log('Image added');
 }
 

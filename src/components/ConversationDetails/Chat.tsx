@@ -15,7 +15,7 @@ export default function Chat({
 
       <div className="flex justify-between w-full px-4">
 
-heyyy
+
         <div className="flex justify-between bg-[#202c33] text-white w-full h-14">
 
           <div className="flex items-center gap-4 h-full">

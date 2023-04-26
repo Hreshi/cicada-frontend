@@ -1,20 +1,33 @@
-import { KeyboardEvent, useContext, useEffect, useState } from "react";
+import {
+  KeyboardEvent,
+  useContext,
+  useEffect,
+  useState,
+  forwardRef,
+} from "react";
 import { ConversationContext } from "../../context/ConversationContext";
 import Avatar from "@mui/material/Avatar";
 import MessageBalloon from "../MessageBalloon";
 import SendInvitePage from "../Invites/sendinvite";
 import Chat from "./Chat";
 import { ToastContainer, toast } from "react-toastify";
-import Button from "@mui/material/Button";
 import Lock from "@mui/icons-material/Lock";
 import SendIcon from "@mui/icons-material/Send";
 import Tooltip from "@mui/material/Tooltip";
 import Fab from "@mui/material/Fab";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import Slide from "@mui/material/Slide";
+import { TransitionProps } from "@mui/material/transitions";
 
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
 import useFetchConversationDetails from "../../middleware/chats";
-
+import { TextField } from "@mui/material";
 
 async function decipherKey(hostData: string, secretNumber: number) {
   const pem = formatAsPem(decipher(hostData, secretNumber));
@@ -157,6 +170,15 @@ async function importPrivateKey(pem: string) {
   );
 }
 
+const Transition = forwardRef(function Transition(
+  props: TransitionProps & {
+    children: React.ReactElement<any, any>;
+  },
+  ref: React.Ref<unknown>
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
+
 export default function ConversationDetails({
   showChat,
   incomingCall,
@@ -177,13 +199,19 @@ export default function ConversationDetails({
   const [avatarUrl, setAvatarUrl] = useState("");
   const [subscription, setSubscription] = useState(null);
   const [friendKey, setFriendKey] = useState<CryptoKey | null>(null);
+  const [imageUploadPromt, setImageUploadPromt] = useState("");
+  const [openimageUploadPromt, setOpenimageUploadPromt] = useState(false);
+  const [messagetoencrypt,setMessagetoencrypt]=useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
+  console.log("openimageUploadPromt" + openimageUploadPromt);
   const token = sessionStorage.getItem("token");
   const userEmail = sessionStorage.getItem("userEmail");
 
   const headers = {
     Authorization: `Bearer ${token}`,
   };
+  //console.log("convos"+convos);
 
   useEffect(() => {
     setConvos([]);
@@ -335,7 +363,7 @@ export default function ConversationDetails({
           };
           setConvos((convos) => convos.concat(teste));
         }
-      } else if(mt == "STEGO_IMAGE") {
+      } else if (mt == "STEGO_IMAGE") {
         const blobLink = message.imageLink;
         const key64 = await getKey(blobLink);
         setFriendKey(await importPublicKey(formatAsPem(key64)));
@@ -373,6 +401,7 @@ export default function ConversationDetails({
         const data = await encryptData(friendKey, messageSend);
         console.log(data);
         stompClient.send(`/ms/secure`, {}, data);
+        console.log(data);
       } else {
         stompClient.send(`/ms/send/${showChat}`, {}, messageSend);
       }
@@ -449,15 +478,102 @@ export default function ConversationDetails({
     }
   }
   async function getKey(url) {
-    const response = await fetch('http://localhost:8080'+url);
+    const response = await fetch("http://localhost:8080" + url);
     const blob = await response.blob();
     const imageLink = URL.createObjectURL(blob);
-    const secret = sessionStorage.getItem('secret-number');
+    const secret = sessionStorage.getItem("secret-number");
     return await decipher(imageLink, secret);
+  }
+
+  const handleclickonattachmentopen = () => {
+    setOpenimageUploadPromt(true);
+  };
+
+  const handleclickonattachmentopenclose = () => {
+    setOpenimageUploadPromt(false);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (event: ProgressEvent<FileReader>) => {
+        const imageUrl = event.target?.result as string;
+        setImageUploadPromt(imageUrl);
+        
+        setOpenimageUploadPromt(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAttachmentClick = () => {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+    fileInput.style.display = "none";
+    fileInput.addEventListener("change", handleFileUpload);
+    document.body.appendChild(fileInput);
+    fileInput.click();
+  };
+
+  function HandleSubmitToEncrypt()
+  {
+    alert(messagetoencrypt);
+    //setOpenimageUploadPromt(false); //uncomment this to close the dialog box
+    //imageFile //this is actual image ,you can send this request directly after doing encryption
+    //messagetoencrypt //this is the message you want to encrypt
+
+
   }
   return (
     <>
       <ToastContainer></ToastContainer>
+
+      <Dialog
+        open={openimageUploadPromt}
+        TransitionComponent={Transition}
+        keepMounted
+        onClose={handleclickonattachmentopenclose}
+        aria-describedby="alert-dialog-slide-description"
+      >
+        <DialogTitle>{"Encrypt your message in image"}</DialogTitle>
+        <div
+          style={{
+            border: "1px solid black",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <img
+            src={imageUploadPromt}
+            alt="attachment preview"
+            style={{ border: "1px solid black", maxHeight: "30vh" }}
+          />
+        </div>
+
+        <div style={{ padding: "16px" }}>
+          <TextField
+            variant="outlined"
+            fullWidth
+            label="Add your message to decrypt"
+            onChange={(e) => {setMessagetoencrypt(e.target.value)}}
+          />
+        </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            padding: "16px",
+          }}
+        >
+          <Button onClick={HandleSubmitToEncrypt} variant="outlined" color="success" >Submit</Button>
+          <Button onClick={handleclickonattachmentopenclose} color="error">Close</Button>
+
+        </div>
+      </Dialog>
 
       <div className="flex flex-col w-full">
         <div className="flex justify-between w-full ">
@@ -470,7 +586,6 @@ export default function ConversationDetails({
               </div>
             </div>
 
-           
             {/* <Button
               variant="contained"
               color={ongoingCall ? "secondary" : "primary"}
@@ -482,10 +597,7 @@ export default function ConversationDetails({
             </Button> */}
 
             <div className="flex items-center text-[#8696a0] gap-2">
-              
-
-              
-               <Tooltip
+              <Tooltip
                 title={
                   ongoingCall ? " CLOSE SECRET CHAT" : " START SECRET CHAT"
                 }
@@ -509,7 +621,6 @@ export default function ConversationDetails({
                 </Fab>
               </Tooltip>
 
-
               <svg
                 viewBox="0 0 24 24"
                 width="24"
@@ -521,7 +632,6 @@ export default function ConversationDetails({
                   d="M12 7a2 2 0 1 0-.001-4.001A2 2 0 0 0 12 7zm0 2a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 9zm0 6a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 15z"
                 ></path>
               </svg>
-             
             </div>
           </div>
         </div>
@@ -582,11 +692,12 @@ export default function ConversationDetails({
             />
           </div>
           <div className="flex justify-center items-center w-[5%] h-12 border border-gray-400 border-t-0 border-r-0 border-b-0 border-l-0">
-          <svg
+            <svg
               viewBox="0 0 24 24"
               width="24"
               height="24"
               className="cursor-pointer"
+              onClick={handleAttachmentClick}
             >
               <path
                 fill="currentColor"
@@ -603,10 +714,6 @@ export default function ConversationDetails({
   );
 }
 
-
-// load image using url
-// get pixel bytes
-
 async function decipher(url, secret) {
   // const url = sessionStorage.getItem('link');
   const bytes = await get_pixel_bytes(url);
@@ -616,38 +723,40 @@ function decipherFromBytes(pixelBytes, secret) {
   const mod = Math.floor((pixelBytes.length - pixelBytes.length / 4) % 53);
   if (mod <= 0) console.log("Data larger than host data");
 
-  let result = '';
+  let result = "";
   let nextPosition = (value(secret) % mod) + 1;
   let realIndex = 0;
   let len = 2;
   let calc = true;
   for (let i = 0; i < pixelBytes.length; i++) {
-      if ((i + 1) % 4 == 0) continue;
-      if (realIndex == nextPosition) {
-          let byte = pixelBytes[i];
-          result += String.fromCharCode(byte);
-          if (calc && result.length == 2) {
-              calc = false;
-              len = result.charCodeAt(0);
-              len = len << 8;
-              len |= result.charCodeAt(1);
-              result = '';
-          }
-          nextPosition += (nextPosition && ((nextPosition << 1) || nextPosition)) % mod;
-          nextPosition++;
-          // console.log(realIndex + " :next:  "+nextPosition);
-          if (result.length >= len) {
-              console.log("breaking");
-              break;
-          }
+    if ((i + 1) % 4 == 0) continue;
+    if (realIndex == nextPosition) {
+      let byte = pixelBytes[i];
+      result += String.fromCharCode(byte);
+      if (calc && result.length == 2) {
+        calc = false;
+        len = result.charCodeAt(0);
+        len = len << 8;
+        len |= result.charCodeAt(1);
+        result = "";
       }
-      realIndex++;
+      nextPosition +=
+        (nextPosition && (nextPosition << 1 || nextPosition)) % mod;
+      nextPosition++;
+      // console.log(realIndex + " :next:  "+nextPosition);
+      if (result.length >= len) {
+        console.log("breaking");
+        break;
+      }
+    }
+    realIndex++;
   }
   return result;
 }
 function toInt(result) {
   let ans = 0;
-  const first = result[0], second = result[1];
+  const first = result[0],
+    second = result[1];
   ans |= first;
   ans <<= 8;
   ans |= second;
@@ -666,17 +775,17 @@ async function get_pixel_bytes(imageUrl) {
 
 function loadImageFromUrl(imageUrl) {
   return new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = reject;
-      image.src = imageUrl;
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = imageUrl;
   });
 }
 function value(secret) {
   let ans = 1;
   for (let i = 0; i < secret.length; i++) {
-      ans *= (secret.charCodeAt(i)) & (0b1111_1111);
-      ans %= 1000000007;
+    ans *= secret.charCodeAt(i) & 0b1111_1111;
+    ans %= 1000000007;
   }
   return ans;
 }
