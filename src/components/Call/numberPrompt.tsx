@@ -158,7 +158,7 @@ function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient }) {
       const formData = new FormData();
       formData.append('image', blob);
   
-      const uploadResponse = await fetch('http://localhost:8080/api/stego/upload/image', {
+      const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/stego/upload/image`, {
         method: 'POST',
         headers: {
           'Authorization': 'Bearer ' + sessionStorage.getItem('token') as string

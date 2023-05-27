@@ -24,7 +24,7 @@ function OutgoingCall({ setOutgoingCall }) {
   const token = sessionStorage.getItem("token");
   function handleAbort() {
     const abort = async () => {
-      await fetch("http://localhost:8080/api/stego/call/end", {
+      await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/stego/call/end`, {
         method: "post",
         headers: {
           Authorization: `Bearer ${token}`,

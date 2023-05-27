@@ -10,7 +10,7 @@ const useFetchConversationDetails = (showChat, headers, userEmail, ongoingCall) 
     setConvos([]);
     const fetchUserDetails = async () => {
       const userData = await fetch(
-        `http://localhost:8080/api/user/info/${showChat}`,
+        `${process.env.NEXT_PUBLIC_HOST}/api/user/info/${showChat}`,
         { headers }
       );
       const partnerData = await userData.json();
@@ -21,14 +21,14 @@ const useFetchConversationDetails = (showChat, headers, userEmail, ongoingCall) 
     const fetchConversationDetails = async () => {
       const email = showChat;
       const userData = await fetch(
-        `http://localhost:8080/api/user/info/${email}`,
+        `${process.env.NEXT_PUBLIC_HOST}/api/user/info/${email}`,
         { headers }
       );
       const partnerData = await userData.json();
       setContactName(partnerData.name);
       setAvatarUrl(partnerData.avatarUrl);
       setContactEmail(partnerData.email);
-      const url = `http://localhost:8080/api/message/${email}/block-count`;
+      const url = `${process.env.NEXT_PUBLIC_HOST}/api/message/${email}/block-count`;
       try {
         const response = await fetch(url, { headers });
         if (!response.ok) {
@@ -37,7 +37,7 @@ const useFetchConversationDetails = (showChat, headers, userEmail, ongoingCall) 
         const data = parseInt(await response.text());
         const messages = [];
         for (let i = 1; i <= data; i++) {
-          const blockUrl = `http://localhost:8080/api/message/${showChat}/block/${i}`;
+          const blockUrl = `${process.env.NEXT_PUBLIC_HOST}/api/message/${showChat}/block/${i}`;
           const blockResponse1 = await fetch(blockUrl, { headers });
           const blockResponse = await blockResponse1.json();
           const parsedMessage = JSON.parse(JSON.stringify(blockResponse));

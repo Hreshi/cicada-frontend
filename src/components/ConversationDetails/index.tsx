@@ -218,7 +218,7 @@ export default function ConversationDetails({
     const fetchUserDetails = async () => {
       // console.log("does it come here");
       const userData = await fetch(
-        `http://localhost:8080/api/user/info/${showChat}`,
+        `${process.env.NEXT_PUBLIC_HOST}/api/user/info/${showChat}`,
         { headers }
       );
       const partnerData = await userData.json();
@@ -231,14 +231,14 @@ export default function ConversationDetails({
 
       // console.log("does it come here");
       const userData = await fetch(
-        `http://localhost:8080/api/user/info/${email}`,
+        `${process.env.NEXT_PUBLIC_HOST}/api/user/info/${email}`,
         { headers }
       );
       const partnerData = await userData.json();
       setContactName(partnerData.name);
       setAvatarUrl(partnerData.avatarUrl);
       setContactEmail(partnerData.email);
-      const url = `http://localhost:8080/api/message/${email}/block-count`;
+      const url = `${process.env.NEXT_PUBLIC_HOST}/api/message/${email}/block-count`;
 
       // console.log("does it come here2");
       try {
@@ -253,7 +253,7 @@ export default function ConversationDetails({
 
         const messages = [];
         for (let i = 1; i <= data; i++) {
-          const blockUrl = `http://localhost:8080/api/message/${showChat}/block/${i}`;
+          const blockUrl = `${process.env.NEXT_PUBLIC_HOST}/api/message/${showChat}/block/${i}`;
           //  console.log(blockUrl);
           const blockResponse1 = await fetch(blockUrl, { headers });
           //  console.log(blockResponse1.body);
@@ -283,7 +283,7 @@ export default function ConversationDetails({
                 me: messageData.author === userEmail ? 1 : 0,
                 date: new Date(messageData.date),
                 messageType: "image",
-                imageLink: `http://localhost:8080${link}`,
+                imageLink: `${process.env.NEXT_PUBLIC_HOST}${link}`,
               });
             } else {
               if (messageData.content != "") {
@@ -333,7 +333,7 @@ export default function ConversationDetails({
           const msg = {
             me:false,
             author:author,
-            imageLink:`http://localhost:8080${message.imageLink}`,
+            imageLink:`${process.env.NEXT_PUBLIC_HOST}${message.imageLink}`,
             messageType:"image",
             date:messageDate,
           };
@@ -400,7 +400,7 @@ export default function ConversationDetails({
   }
   useEffect(() => {
     if (!stompClient) {
-      const sock = new SockJS("http://localhost:8080/api/ws?token=" + token);
+      const sock = new SockJS(`${process.env.NEXT_PUBLIC_HOST}/api/ws?token=` + token);
       const stomp = Stomp.over(sock);
 
       stomp.connect({}, () => {
@@ -467,7 +467,7 @@ export default function ConversationDetails({
     // console.log('Send call request to : ' + contactEmail);
     const startCall = async () => {
       const response = await fetch(
-        `http://localhost:8080/api/stego/request/call/${contactEmail}`,
+        `${process.env.NEXT_PUBLIC_HOST}/api/stego/request/call/${contactEmail}`,
         {
           method: "get",
           headers: {
@@ -488,7 +488,7 @@ export default function ConversationDetails({
       }
     };
     const endCall = async () => {
-      const response = await fetch(`http://localhost:8080/api/stego/call/end`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/stego/call/end`, {
         method: "post",
         headers: {
           Authorization: "Bearer " + token,
@@ -505,7 +505,7 @@ export default function ConversationDetails({
     }
   }
   async function getKey(url) {
-    const response = await fetch("http://localhost:8080" + url);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_HOST}` + url);
     const blob = await response.blob();
     const imageLink = URL.createObjectURL(blob);
     const secret = sessionStorage.getItem("secret-number");
@@ -551,7 +551,7 @@ export default function ConversationDetails({
     // alert(messagetoencrypt);
     //imageFile //this is actual image ,you can send this request directly after doing encryption
     //messagetoencrypt //this is the message you want to encrypt
-    const url = `http://localhost:8080/api/image/send/${showChat}`;
+    const url = `${process.env.NEXT_PUBLIC_HOST}/api/image/send/${showChat}`;
     const blob = await fileToBlob(imageFile);
     const localUrl = URL.createObjectURL(blob);
     addImageToConversation(localUrl);

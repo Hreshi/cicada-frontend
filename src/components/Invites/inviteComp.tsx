@@ -34,7 +34,7 @@ export default function InviteComp(props: ConversationListProps) {
             username: userEmail as string,
           };
 
-      const response = await fetch(`http://localhost:8080/api/invite/accept/${useremail}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/invite/accept/${useremail}`, {
         method: "POST",
         headers: headers,
        
@@ -62,7 +62,7 @@ export default function InviteComp(props: ConversationListProps) {
             Authorization: `Bearer ${token}`,
             username: userEmail as string,
           };
-      const response = await fetch(`http://localhost:8080/api/invite/delete/${useremail}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/invite/delete/${useremail}`, {
         method: "POST",
         headers: headers,
       });

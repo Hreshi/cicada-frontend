@@ -25,7 +25,7 @@ function IncomingCall({
   function handleAcceptCall() {
     const accept = async () => {
       const friend = await fetch(
-        `http://localhost:8080/api/stego/request/accept`,
+        `${process.env.NEXT_PUBLIC_HOST}/api/stego/request/accept`,
         {
           method: "post",
           headers: {
@@ -46,7 +46,7 @@ function IncomingCall({
   }
   function handleRejectCall() {
     const reject = async () => {
-      await fetch(`http://localhost:8080/api/stego/request/reject`, {
+      await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/stego/request/reject`, {
         method: "post",
         headers: {
           Authorization: `Bearer ${token}`,

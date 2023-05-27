@@ -16,6 +16,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useEffect } from 'react';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import globals from 'globals.ts'
 
 
 
@@ -48,7 +49,7 @@ export default function LoginScreen({ isLoggedIn, setIsLoggedIn }) {
 
 
     try {
-      const response = await fetch('http://localhost:8080/api/login', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/login`, {
         method: 'POST',
         body: formData,
       });

@@ -45,7 +45,7 @@ export default function SideBar({
       const userEmail = sessionStorage.getItem("userEmail");
       const token = sessionStorage.getItem("token");
       console.log("Token : " + token);
-      fetch(`http://localhost:8080/api/user/info/${userEmail}`, {
+      fetch(`${process.env.NEXT_PUBLIC_HOST}/api/user/info/${userEmail}`, {
         method: "get",
         headers: {
           Authorization: "Bearer " + token,
@@ -61,7 +61,7 @@ export default function SideBar({
         .catch((error) => console.error(error));
 
       const getFriends = await fetch(
-        "http://localhost:8080/api/conversation/my-conversation",
+        `${process.env.NEXT_PUBLIC_HOST}/api/conversation/my-conversation`,
         {
           method: "get",
           headers: {

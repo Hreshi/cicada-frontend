@@ -30,7 +30,7 @@ async function userAuthorized() {
     const token = sessionStorage.getItem('token');
     if (!token) return false;
     const response = await fetch(
-        'http://localhost:8080/api/ping',
+        `${process.env.NEXT_PUBLIC_HOST}/api/ping`,
         {
             method: 'get',
             headers: {

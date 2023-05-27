@@ -35,7 +35,7 @@ export default function InvitesPage() {
   useEffect(() => {
     async function fetchInvites() {
       const sentInvitesResponse = await fetch(
-        "http://localhost:8080/api/invite/sent",
+        `${process.env.NEXT_PUBLIC_HOST}/api/invite/sent`,
         {
           method: 'get',
           headers: {
@@ -49,7 +49,7 @@ export default function InvitesPage() {
       //  console.log("avi"+sentInvitesData1);
 
       const receivedInvitesResponse = await fetch(
-        "http://localhost:8080/api/invite/received",
+        `${process.env.NEXT_PUBLIC_HOST}/api/invite/received`,
         {
           method: 'get',
           headers: {
@@ -71,7 +71,7 @@ export default function InvitesPage() {
       const receivedUserData = await Promise.all(
         Array.from(emailsRec).map(async (email) => {
           const userResponse = await fetch(
-            `http://localhost:8080/api/user/info/${email}`,
+            `${process.env.NEXT_PUBLIC_HOST}/api/user/info/${email}`,
             {
               method: 'get',
               headers: {
@@ -102,7 +102,7 @@ export default function InvitesPage() {
       const usersData = await Promise.all(
         Array.from(emails).map(async (email) => {
           const userResponse = await fetch(
-            `http://localhost:8080/api/user/info/${email}`,
+            `${process.env.NEXT_PUBLIC_HOST}/api/user/info/${email}`,
             {
               method: 'get',
               headers: {

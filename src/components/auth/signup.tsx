@@ -36,7 +36,7 @@ async function sendRegistrationRequest(data: {
   formData.append("avatar", data.avatar);
   console.log()
   try {
-    const response = await fetch("http://localhost:8080/api/register", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/register`, {
       method: "POST",
       body: formData,
     });
