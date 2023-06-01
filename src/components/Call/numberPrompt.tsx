@@ -114,7 +114,7 @@ function NumberPrompt({ setNumberPrompt, setPrivateKey, stompClient }) {
   };
   useEffect(() => {
     const generate = async () => {
-      await generateImage(500, 500);
+      await generateImage(100, 100);
 
       var image = sessionStorage.getItem('bloblink');
       setBlobImage(image);
