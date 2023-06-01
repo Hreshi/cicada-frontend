@@ -283,7 +283,7 @@ export default function ConversationDetails({
                 me: messageData.author === userEmail ? 1 : 0,
                 date: new Date(messageData.date),
                 messageType: "image",
-                imageLink: `${process.env.NEXT_PUBLIC_HOST}${link}`,
+                imageLink: `${process.env.NEXT_PUBLIC_HOST}`+link,
               });
             } else {
               if (messageData.content != "") {
@@ -316,7 +316,7 @@ export default function ConversationDetails({
   const [message, setMessage] = useState([]);
 
   function handleMessage(frame) {
-    const process = async () => {
+    const processFun = async () => {
       const message = JSON.parse(frame.body as string);
       // console.log("Received" + message)
       console.log("TYPE : " + message.messagetype);
@@ -328,12 +328,12 @@ export default function ConversationDetails({
         //const dt = new Date(parsedContent.content.date);
         
         console.log(message);
-        
+        const host = process.env.NEXT_PUBLIC_HOST
         if(message.imageLink) {
           const msg = {
             me:false,
             author:author,
-            imageLink:`${process.env.NEXT_PUBLIC_HOST}${message.imageLink}`,
+            imageLink: host + message.imageLink,
             messageType:"image",
             date:messageDate,
           };
@@ -396,7 +396,7 @@ export default function ConversationDetails({
 
       }
     };
-    process();
+    processFun();
   }
   useEffect(() => {
     if (!stompClient) {
@@ -439,7 +439,7 @@ export default function ConversationDetails({
   function changeHandler(evt: KeyboardEvent<HTMLInputElement>) {
     const { key } = evt;
 
-    const process = async (key) => {
+    const processFun = async (key) => {
       if (key === "Enter" && messageSend != "") {
         // console.log("entered message:" + messageSend);
         const teste = {
@@ -460,7 +460,7 @@ export default function ConversationDetails({
         setMessageSend("");
       }
     };
-    process(key);
+    processFun(key);
   }
 
   function handleLockClick() {
